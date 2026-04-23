@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import {
 	Bar,
 	BarChart,
 	CartesianGrid,
+	Cell,
 	Legend,
 	ReferenceLine,
 	ResponsiveContainer,
@@ -25,6 +27,11 @@ const data = rawData.datapoints.map((dp) => {
 
 export default function ExportImportBarChart() {
 	const { theme } = useChartTheme();
+	const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+	const opacity = (i: number) =>
+		activeIndex === null || activeIndex === i ? 1 : 0.3;
+
 	return (
 		<div className="w-full h-80">
 			<ResponsiveContainer width="100%" height="100%">
@@ -77,7 +84,27 @@ export default function ExportImportBarChart() {
 						fill={theme.primary}
 						name="Import"
 						radius={[10, 10, 0, 0]}
-					/>
+						background={(props) => {
+							if (props.index !== activeIndex) return <g />;
+							return (
+								<rect
+									x={props.x as number}
+									y={props.y as number}
+									width={props.width as number}
+									height={props.height as number}
+									fill="rgba(0,0,0,0.07)"
+									rx={4}
+								/>
+							);
+						}}
+						onClick={(_data, index) =>
+							setActiveIndex((prev) => (prev === index ? null : index))
+						}
+					>
+						{data.map((entry, i) => (
+							<Cell key={String(entry.time)} fillOpacity={opacity(i)} />
+						))}
+					</Bar>
 					<Bar
 						xAxisId="bottom"
 						dataKey="grid-export"
@@ -85,7 +112,14 @@ export default function ExportImportBarChart() {
 						fill={theme.secondary}
 						name="Export"
 						radius={[10, 10, 0, 0]}
-					/>
+						onClick={(_data, index) =>
+							setActiveIndex((prev) => (prev === index ? null : index))
+						}
+					>
+						{data.map((entry, i) => (
+							<Cell key={String(entry.time)} fillOpacity={opacity(i)} />
+						))}
+					</Bar>
 				</BarChart>
 			</ResponsiveContainer>
 		</div>

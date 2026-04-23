@@ -4,6 +4,7 @@ import {
 	VictoryArea,
 	VictoryAxis,
 	VictoryChart,
+	VictoryLabel,
 	VictoryLine,
 	VictoryTooltip,
 	VictoryVoronoiContainer,
@@ -31,7 +32,7 @@ export default function ThroughputWarrantyLimit() {
 	return (
 		<div className="w-full h-80">
 			<VictoryChart
-				padding={{ top: 40, bottom: 40, left: 60, right: 60 }}
+				padding={{ top: 60, bottom: 40, left: 60, right: 60 }}
 				domain={{ x: [1, 10], y: [0, 15] }}
 				containerComponent={
 					<VictoryVoronoiContainer
@@ -47,8 +48,10 @@ export default function ThroughputWarrantyLimit() {
 				/>
 				<VictoryAxis
 					dependentAxis
-					tickValues={[0, 14, 15]}
-					tickFormat={(v: number) => `${v} MWh`}
+					tickValues={[0, 3, 6, 9, 12, 15]}
+					tickFormat={(v: number) =>
+						v === 0 || v === 12 || v === 15 ? `${v} MWh` : ""
+					}
 					style={{
 						axis: { stroke: "none" },
 						grid: { stroke: theme.grid, strokeDasharray: "3 3" },
@@ -60,6 +63,15 @@ export default function ThroughputWarrantyLimit() {
 						{ x: 9, y: 0 },
 						{ x: 9, y: 15 },
 					]}
+					labels={["Limit hit", ""]}
+					labelComponent={
+						<VictoryLabel
+							renderInPortal={false}
+							textAnchor="middle"
+							dy={-6}
+							style={{ fontSize: 10, fill: theme.referenceLineAlert }}
+						/>
+					}
 					style={{
 						data: {
 							stroke: theme.referenceLineAlert,
@@ -69,8 +81,8 @@ export default function ThroughputWarrantyLimit() {
 				/>
 				<VictoryLine
 					data={[
-						{ x: 1, y: 15 },
-						{ x: 10, y: 15 },
+						{ x: 1, y: 13 },
+						{ x: 10, y: 13 },
 					]}
 					style={{
 						data: {
@@ -96,6 +108,15 @@ export default function ThroughputWarrantyLimit() {
 						{ x: 2, y: 0 },
 						{ x: 2, y: 15 },
 					]}
+					labels={["Now", ""]}
+					labelComponent={
+						<VictoryLabel
+							renderInPortal={false}
+							textAnchor="middle"
+							dy={-6}
+							style={{ fontSize: 10, fill: theme.referenceLineLight }}
+						/>
+					}
 					style={{
 						data: {
 							stroke: theme.referenceLineLight,

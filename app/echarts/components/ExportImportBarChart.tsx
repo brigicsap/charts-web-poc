@@ -1,7 +1,7 @@
 "use client";
 
 import * as echarts from "echarts";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useChartTheme } from "../../ChartThemeContext";
 import rawData from "../../mockData/exportImportDay.json";
 
@@ -22,19 +22,32 @@ export default function ExportImportBarChart() {
 	const ref = useRef<HTMLDivElement>(null);
 	const chartRef = useRef<echarts.ECharts | null>(null);
 	const { theme } = useChartTheme();
+	const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
 	useEffect(() => {
 		if (!ref.current) return;
-		chartRef.current = echarts.init(ref.current);
-		const handleResize = () => chartRef.current?.resize();
+		const chart = echarts.init(ref.current);
+		chartRef.current = chart;
+		const handleResize = () => chart.resize();
 		window.addEventListener("resize", handleResize);
+		chart.on("click", (params) => {
+			const idx = params.dataIndex as number;
+			setActiveIndex((prev) => (prev === idx ? null : idx));
+		});
 		return () => {
 			window.removeEventListener("resize", handleResize);
-			chartRef.current?.dispose();
+			chart.dispose();
 		};
 	}, []);
 
 	useEffect(() => {
+		const opacity = (i: number) =>
+			activeIndex === null || activeIndex === i ? 1 : 0.3;
+		const shadow = (i: number) =>
+			activeIndex === i
+				? { shadowBlur: 16, shadowColor: "rgba(0,0,0,0.18)", shadowOffsetY: 0 }
+				: {};
+
 		chartRef.current?.setOption({
 			tooltip: {
 				trigger: "axis",
@@ -72,25 +85,36 @@ export default function ExportImportBarChart() {
 					name: "Import",
 					type: "bar",
 					stack: "ie",
-					data: importData,
 					barMaxWidth: 6,
-					itemStyle: { color: theme.primary, borderRadius: [0, 0, 6, 6] },
+					data: importData.map((v, i) => ({
+						value: v,
+						itemStyle: {
+							color: theme.primary,
+							borderRadius: [0, 0, 6, 6],
+							opacity: opacity(i),
+							...shadow(i),
+						},
+					})),
 				},
 				{
 					name: "Export",
 					type: "bar",
 					stack: "ie",
-					data: exportData,
 					barMaxWidth: 6,
-					itemStyle: {
-						color: theme.secondary,
-						borderRadius: [6, 6, 0, 0],
-					},
+					data: exportData.map((v, i) => ({
+						value: v,
+						itemStyle: {
+							color: theme.secondary,
+							borderRadius: [6, 6, 0, 0],
+							opacity: opacity(i),
+							...shadow(i),
+						},
+					})),
 					barCategoryGap: "10%",
 				},
 			],
 		});
-	}, [theme]);
+	}, [theme, activeIndex]);
 
 	return <div ref={ref} className="w-full h-80" />;
 }

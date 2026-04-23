@@ -1,7 +1,7 @@
 "use client";
 
 import * as echarts from "echarts";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useChartTheme } from "../../ChartThemeContext";
 import rawData from "../../mockData/homeUsageMockDay.json";
 
@@ -28,19 +28,32 @@ export default function HomeUsageChart() {
 	const ref = useRef<HTMLDivElement>(null);
 	const chartRef = useRef<echarts.ECharts | null>(null);
 	const { theme } = useChartTheme();
+	const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
 	useEffect(() => {
 		if (!ref.current) return;
-		chartRef.current = echarts.init(ref.current);
-		const handleResize = () => chartRef.current?.resize();
+		const chart = echarts.init(ref.current);
+		chartRef.current = chart;
+		const handleResize = () => chart.resize();
 		window.addEventListener("resize", handleResize);
+		chart.on("click", (params) => {
+			const idx = params.dataIndex as number;
+			setActiveIndex((prev) => (prev === idx ? null : idx));
+		});
 		return () => {
 			window.removeEventListener("resize", handleResize);
-			chartRef.current?.dispose();
+			chart.dispose();
 		};
 	}, []);
 
 	useEffect(() => {
+		const opacity = (i: number) =>
+			activeIndex === null || activeIndex === i ? 1 : 0.3;
+		const shadow = (i: number) =>
+			activeIndex === i
+				? { shadowBlur: 16, shadowColor: "rgba(0,0,0,0.18)", shadowOffsetY: 0 }
+				: {};
+
 		chartRef.current?.setOption({
 			tooltip: {
 				trigger: "axis",
@@ -100,8 +113,14 @@ export default function HomeUsageChart() {
 					type: "bar",
 					stack: "usage",
 					barMaxWidth: 4,
-					data: solarData,
-					itemStyle: { color: theme.secondary },
+					data: solarData.map((v, i) => ({
+						value: v,
+						itemStyle: {
+							color: theme.secondary,
+							opacity: opacity(i),
+							...shadow(i),
+						},
+					})),
 				},
 				{
 					name: "gap1",
@@ -118,8 +137,15 @@ export default function HomeUsageChart() {
 					type: "bar",
 					stack: "usage",
 					barMaxWidth: 4,
-					data: gridData,
-					itemStyle: { color: theme.tertiary, borderRadius: [6, 6, 0, 0] },
+					data: gridData.map((v, i) => ({
+						value: v,
+						itemStyle: {
+							color: theme.tertiary,
+							borderRadius: [6, 6, 0, 0],
+							opacity: opacity(i),
+							...shadow(i),
+						},
+					})),
 					barCategoryGap: "10%",
 				},
 				{
@@ -137,15 +163,19 @@ export default function HomeUsageChart() {
 					type: "bar",
 					stack: "usage",
 					barMaxWidth: 4,
-					data: batteryData,
-					itemStyle: {
-						color: theme.primary,
-						borderRadius: [6, 6, 0, 0],
-					},
+					data: batteryData.map((v, i) => ({
+						value: v,
+						itemStyle: {
+							color: theme.primary,
+							borderRadius: [6, 6, 0, 0],
+							opacity: opacity(i),
+							...shadow(i),
+						},
+					})),
 				},
 			],
 		});
-	}, [theme]);
+	}, [theme, activeIndex]);
 
 	return <div ref={ref} className="w-full h-80" />;
 }

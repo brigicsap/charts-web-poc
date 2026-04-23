@@ -150,7 +150,10 @@ export default function BatteryHistoryChart() {
 				/>
 				{segments.map((seg, i) => (
 					<VictoryLine
-						key={`seg-${i}`}
+						key={`seg-${
+							// biome-ignore lint/suspicious/noArrayIndexKey: just a POC, don't do this at home kids
+							i
+						}`}
 						data={seg}
 						interpolation="monotoneX"
 						style={{
