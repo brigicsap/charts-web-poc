@@ -113,6 +113,7 @@ export default function HomeUsageChart() {
 					type: "bar",
 					stack: "usage",
 					barMaxWidth: 4,
+					color: theme.secondary,
 					data: solarData.map((v, i) => ({
 						value: v,
 						itemStyle: {
@@ -137,6 +138,7 @@ export default function HomeUsageChart() {
 					type: "bar",
 					stack: "usage",
 					barMaxWidth: 4,
+					color: theme.tertiary,
 					data: gridData.map((v, i) => ({
 						value: v,
 						itemStyle: {
@@ -163,6 +165,7 @@ export default function HomeUsageChart() {
 					type: "bar",
 					stack: "usage",
 					barMaxWidth: 4,
+					color: theme.primary,
 					data: batteryData.map((v, i) => ({
 						value: v,
 						itemStyle: {

@@ -16,7 +16,10 @@ import rawData from "../../mockData/batteryHistoryMockDay.json";
 
 // Build a lookup from the mock data
 const dataMap = new Map(
-	rawData.datapoints.map((dp) => [dp.from.slice(11, 16), dp.batteryPercentage]),
+	rawData.datapoints.map((dp) => [
+		dp.timestamp.slice(11, 16),
+		dp.batteryPercentage,
+	]),
 );
 
 // Generate all 96 15-min slots for full 24h x axis

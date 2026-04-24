@@ -86,6 +86,7 @@ export default function ExportImportBarChart() {
 					type: "bar",
 					stack: "ie",
 					barMaxWidth: 6,
+					color: theme.primary,
 					data: importData.map((v, i) => ({
 						value: v,
 						itemStyle: {
@@ -101,6 +102,7 @@ export default function ExportImportBarChart() {
 					type: "bar",
 					stack: "ie",
 					barMaxWidth: 6,
+					color: theme.secondary,
 					data: exportData.map((v, i) => ({
 						value: v,
 						itemStyle: {

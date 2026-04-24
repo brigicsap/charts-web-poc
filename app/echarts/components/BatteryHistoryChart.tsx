@@ -6,7 +6,10 @@ import { useChartTheme } from "../../ChartThemeContext";
 import rawData from "../../mockData/batteryHistoryMockDay.json";
 
 const dataMap = new Map(
-	rawData.datapoints.map((dp) => [dp.from.slice(11, 16), dp.batteryPercentage]),
+	rawData.datapoints.map((dp) => [
+		dp.timestamp.slice(11, 16),
+		dp.batteryPercentage,
+	]),
 );
 
 const allSlots = Array.from({ length: 96 }, (_, i) => {

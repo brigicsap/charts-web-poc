@@ -14,7 +14,7 @@ import rawData from "../../mockData/batteryHistoryMockDay.json";
 // Build ordered data using numeric indices so Victory uses a continuous scale
 const orderedData = rawData.datapoints.map((dp, i) => ({
 	index: i,
-	time: dp.from.slice(11, 16),
+	time: dp.timestamp.slice(11, 16),
 	value: dp.batteryPercentage as number | null,
 }));
 
