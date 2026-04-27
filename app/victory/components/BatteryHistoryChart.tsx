@@ -1,15 +1,11 @@
 "use client";
 
 import { useRef, useState } from "react";
-import {
-	VictoryAxis,
-	VictoryBar,
-	VictoryChart,
-	VictoryLegend,
-	VictoryLine,
-} from "victory";
+import { VictoryAxis, VictoryBar, VictoryChart, VictoryLine } from "victory";
 import { useChartTheme } from "../../ChartThemeContext";
+import LegendValues from "../../chartjs/components/LegendValues";
 import rawData from "../../mockData/batteryHistoryMockDay.json";
+import { round2 } from "./utils";
 
 // Build ordered data using numeric indices so Victory uses a continuous scale
 const orderedData = rawData.datapoints.map((dp, i) => ({
@@ -93,6 +89,19 @@ export default function BatteryHistoryChart() {
 		px: number;
 		point: { x: number; y: number };
 	} | null>(null);
+	const overall = allPoints.length
+		? round2(allPoints.reduce((sum, p) => sum + p.y, 0) / allPoints.length)
+		: 0;
+	const legendItems = [
+		{
+			label: "Battery",
+			color: theme.primary,
+			valueText:
+				cursor == null
+					? `${overall.toFixed(2)}%`
+					: `${round2(cursor.point.y).toFixed(2)}%`,
+		},
+	];
 
 	const handleMouseMove = (e: React.MouseEvent) => {
 		const container = containerRef.current;
@@ -121,11 +130,12 @@ export default function BatteryHistoryChart() {
 	return (
 		<div
 			ref={containerRef}
-			className="w-full h-80 relative"
+			className="w-full h-80 relative flex flex-col gap-2"
 			role="img"
 			onMouseMove={handleMouseMove}
 			onMouseLeave={() => setCursor(null)}
 		>
+			<LegendValues items={legendItems} isInteractive={cursor != null} />
 			<VictoryChart padding={PADDING} domain={{ x: [0, 95], y: [0, 100] }}>
 				<VictoryAxis
 					tickValues={xTickValues}
@@ -161,12 +171,6 @@ export default function BatteryHistoryChart() {
 						}}
 					/>
 				))}
-				<VictoryLegend
-					x={280}
-					y={0}
-					orientation="horizontal"
-					data={[{ name: "Battery", symbol: { fill: theme.primary } }]}
-				/>
 			</VictoryChart>
 			{cursor && (
 				<svg

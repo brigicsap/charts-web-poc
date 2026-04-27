@@ -1,8 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import {
 	CartesianGrid,
-	Legend,
 	Line,
 	LineChart,
 	ReferenceArea,
@@ -12,7 +12,9 @@ import {
 	YAxis,
 } from "recharts";
 import { useChartTheme } from "../../ChartThemeContext";
+import LegendValues from "../../chartjs/components/LegendValues";
 import rawData from "../../mockData/batteryHistoryMockDay.json";
+import { buildQuarterHourSlots, formatDailyTimeTick, round2 } from "./utils";
 
 // Build a lookup from the mock data
 const dataMap = new Map(
@@ -23,10 +25,7 @@ const dataMap = new Map(
 );
 
 // Generate all 96 15-min slots for full 24h x axis
-const data = Array.from({ length: 96 }, (_, i) => {
-	const h = String(Math.floor(i / 4)).padStart(2, "0");
-	const m = String((i % 4) * 15).padStart(2, "0");
-	const time = `${h}:${m}`;
+const data = buildQuarterHourSlots().map((time) => {
 	return {
 		time,
 		battery: dataMap.get(time) ?? null,
@@ -35,10 +34,41 @@ const data = Array.from({ length: 96 }, (_, i) => {
 
 export default function BatteryHistoryChart() {
 	const { theme } = useChartTheme();
+	const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+	const nonNull = data
+		.map((d) => d.battery)
+		.filter((v): v is number => v != null);
+	const avg = nonNull.length
+		? round2(nonNull.reduce((sum, v) => sum + v, 0) / nonNull.length)
+		: 0;
+	const activeVal =
+		hoverIndex == null ? null : (data[hoverIndex]?.battery as number | null);
+	const legendItems = [
+		{
+			label: "Battery",
+			color: theme.primary,
+			valueText:
+				activeVal == null
+					? `${avg.toFixed(2)}%`
+					: `${round2(activeVal).toFixed(2)}%`,
+		},
+	];
+
 	return (
-		<div className="w-full h-80">
+		<div className="w-full h-80 flex flex-col gap-2">
+			<LegendValues items={legendItems} isInteractive={hoverIndex != null} />
 			<ResponsiveContainer width="100%" height="100%">
-				<LineChart data={data} margin={{ top: 30 }}>
+				<LineChart
+					data={data}
+					margin={{ top: 10 }}
+					onMouseMove={(state) => {
+						const idx = state?.activeTooltipIndex;
+						setHoverIndex(
+							state?.isTooltipActive && typeof idx === "number" ? idx : null,
+						);
+					}}
+					onMouseLeave={() => setHoverIndex(null)}
+				>
 					<CartesianGrid
 						vertical={false}
 						strokeDasharray="3 3"
@@ -58,12 +88,7 @@ export default function BatteryHistoryChart() {
 						tickMargin={6}
 						fontSize={14}
 						tickFormatter={(v: string) => {
-							const h = parseInt(v.slice(0, 2));
-							if (h === 0) return "12am";
-							if (h === 6) return "6am";
-							if (h === 12) return "12pm";
-							if (h === 18) return "6pm";
-							return v;
+							return formatDailyTimeTick(v);
 						}}
 					/>
 					<YAxis
@@ -87,8 +112,11 @@ export default function BatteryHistoryChart() {
 					/>
 					<Tooltip
 						cursor={{ stroke: theme.cursorStroke, strokeDasharray: "4 4" }}
+						formatter={(value, name) => [
+							`${round2(Number(value ?? 0)).toFixed(2)}%`,
+							String(name),
+						]}
 					/>
-					<Legend verticalAlign="top" align="right" />
 					<Line
 						type="monotone"
 						dataKey="battery"

@@ -1,13 +1,11 @@
 "use client";
 
 import * as echarts from "echarts";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useChartTheme } from "../../ChartThemeContext";
+import LegendValues from "../../chartjs/components/LegendValues";
 import rawData from "../../mockData/savingsMock.json";
-
-function toGBP(s: { units: number; nanos: number }) {
-	return s.units + s.nanos / 1_000_000_000;
-}
+import { round2, toGBP } from "./utils";
 
 const data = rawData.intervalSavings.map((d) => {
 	const date = new Date(d.start);
@@ -27,12 +25,37 @@ export default function SavingsChart() {
 	const ref = useRef<HTMLDivElement>(null);
 	const chartRef = useRef<echarts.ECharts | null>(null);
 	const { theme } = useChartTheme();
+	const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+	const legendItems = [
+		{
+			label: "Not Optimised",
+			color: theme.primary,
+			valueText: `£${round2(
+				hoverIndex == null
+					? notOptimisedData.reduce((sum, v) => sum + v, 0)
+					: (notOptimisedData[hoverIndex] ?? 0),
+			).toFixed(2)}`,
+		},
+		{
+			label: "Used Strategy",
+			color: theme.tertiary,
+			valueText: `£${round2(
+				hoverIndex == null
+					? usedData.reduce((sum, v) => sum + v, 0)
+					: (usedData[hoverIndex] ?? 0),
+			).toFixed(2)}`,
+		},
+	];
 
 	useEffect(() => {
 		if (!ref.current) return;
 		chartRef.current = echarts.init(ref.current);
 		const handleResize = () => chartRef.current?.resize();
 		window.addEventListener("resize", handleResize);
+		chartRef.current.on("mouseover", (params) => {
+			if (typeof params.dataIndex === "number") setHoverIndex(params.dataIndex);
+		});
+		chartRef.current.on("globalout", () => setHoverIndex(null));
 		return () => {
 			window.removeEventListener("resize", handleResize);
 			chartRef.current?.dispose();
@@ -41,8 +64,17 @@ export default function SavingsChart() {
 
 	useEffect(() => {
 		chartRef.current?.setOption({
-			tooltip: { trigger: "axis" },
-			legend: { data: ["Not Optimised", "Used Strategy"], top: 0, right: 0 },
+			tooltip: {
+				trigger: "axis",
+				formatter: (params: unknown) => {
+					const items = params as Array<{ seriesName: string; value: number }>;
+					return items
+						.map(
+							(p) => `${p.seriesName}: £${round2(Number(p.value)).toFixed(2)}`,
+						)
+						.join("<br/>");
+				},
+			},
 			grid: { top: 40, bottom: 30, left: 60, right: 20 },
 			xAxis: {
 				type: "category",
@@ -79,5 +111,10 @@ export default function SavingsChart() {
 		});
 	}, [theme]);
 
-	return <div ref={ref} className="w-full h-80" />;
+	return (
+		<div className="w-full h-80 flex flex-col gap-2">
+			<LegendValues items={legendItems} isInteractive={hoverIndex != null} />
+			<div ref={ref} className="w-full flex-1 min-h-0" />
+		</div>
+	);
 }

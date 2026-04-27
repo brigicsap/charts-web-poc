@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
 	VictoryArea,
 	VictoryAxis,
@@ -10,6 +11,8 @@ import {
 	VictoryVoronoiContainer,
 } from "victory";
 import { useChartTheme } from "../../ChartThemeContext";
+import LegendValues from "../../chartjs/components/LegendValues";
+import { round2 } from "./utils";
 
 const data = [
 	{ year: 1, throughput: 1.1, warranty: 15 },
@@ -29,124 +32,156 @@ const warrantyData = data.map((d) => ({ x: d.year, y: d.warranty }));
 
 export default function ThroughputWarrantyLimit() {
 	const { theme } = useChartTheme();
+	const [hoverYear, setHoverYear] = useState<number | null>(null);
+	const throughputAvg = round2(
+		data.reduce((sum, row) => sum + row.throughput, 0) / data.length,
+	);
+	const warrantyAvg = round2(
+		data.reduce((sum, row) => sum + row.warranty, 0) / data.length,
+	);
+	const hoverPoint =
+		hoverYear == null ? null : data.find((d) => d.year === hoverYear);
+	const legendItems = [
+		{
+			label: "Throughput",
+			color: theme.primary,
+			valueText: `${round2(hoverPoint?.throughput ?? throughputAvg).toFixed(2)} MWh`,
+		},
+		{
+			label: "Warranty",
+			color: theme.warrantyStroke,
+			valueText: `${round2(hoverPoint?.warranty ?? warrantyAvg).toFixed(2)} MWh`,
+		},
+	];
 	return (
-		<div className="w-full h-80">
-			<VictoryChart
-				padding={{ top: 60, bottom: 40, left: 60, right: 60 }}
-				domain={{ x: [1, 10], y: [0, 15] }}
-				containerComponent={
-					<VictoryVoronoiContainer
-						labels={({ datum }: { datum: { y: number } }) => `${datum.y} MWh`}
-						labelComponent={<VictoryTooltip />}
+		<div className="w-full h-80 flex flex-col gap-2">
+			<LegendValues items={legendItems} isInteractive={hoverPoint != null} />
+			<div className="flex-1 min-h-0">
+				<VictoryChart
+					padding={{ top: 60, bottom: 40, left: 60, right: 60 }}
+					domain={{ x: [1, 10], y: [0, 15] }}
+					containerComponent={
+						<VictoryVoronoiContainer
+							labels={({ datum }: { datum: { y: number } }) =>
+								`${round2(datum.y).toFixed(2)} MWh`
+							}
+							onActivated={(points) => {
+								if (!points.length) return;
+								const p = points[0] as { x?: number };
+								setHoverYear(typeof p.x === "number" ? p.x : null);
+							}}
+							onDeactivated={() => setHoverYear(null)}
+							labelComponent={<VictoryTooltip />}
+						/>
+					}
+				>
+					<VictoryAxis
+						tickValues={[1, 2, 10]}
+						tickFormat={(v: number) => `Yr${v}`}
+						style={{ grid: { stroke: "none" } }}
 					/>
-				}
-			>
-				<VictoryAxis
-					tickValues={[1, 2, 10]}
-					tickFormat={(v: number) => `Yr${v}`}
-					style={{ grid: { stroke: "none" } }}
-				/>
-				<VictoryAxis
-					dependentAxis
-					tickValues={[0, 3, 6, 9, 12, 15]}
-					tickFormat={(v: number) =>
-						v === 0 || v === 12 || v === 15 ? `${v} MWh` : ""
-					}
-					style={{
-						axis: { stroke: "none" },
-						grid: { stroke: theme.grid, strokeDasharray: "3 3" },
-					}}
-				/>
-				{/* Reference lines */}
-				<VictoryLine
-					data={[
-						{ x: 9, y: 0 },
-						{ x: 9, y: 15 },
-					]}
-					labels={["Limit hit", ""]}
-					labelComponent={
-						<VictoryLabel
-							renderInPortal={false}
-							textAnchor="middle"
-							dy={-6}
-							style={{ fontSize: 10, fill: theme.referenceLineAlert }}
-						/>
-					}
-					style={{
-						data: {
-							stroke: theme.referenceLineAlert,
-							strokeDasharray: "4 4",
-						},
-					}}
-				/>
-				<VictoryLine
-					data={[
-						{ x: 1, y: 13 },
-						{ x: 10, y: 13 },
-					]}
-					style={{
-						data: {
-							stroke: theme.referenceLineAlert,
-							strokeDasharray: "4 4",
-						},
-					}}
-				/>
-				<VictoryLine
-					data={[
-						{ x: 1, y: 9 },
-						{ x: 10, y: 9 },
-					]}
-					style={{
-						data: {
-							stroke: theme.referenceLine,
-							strokeDasharray: "4 4",
-						},
-					}}
-				/>
-				<VictoryLine
-					data={[
-						{ x: 2, y: 0 },
-						{ x: 2, y: 15 },
-					]}
-					labels={["Now", ""]}
-					labelComponent={
-						<VictoryLabel
-							renderInPortal={false}
-							textAnchor="middle"
-							dy={-6}
-							style={{ fontSize: 10, fill: theme.referenceLineLight }}
-						/>
-					}
-					style={{
-						data: {
-							stroke: theme.referenceLineLight,
-							strokeDasharray: "4 4",
-						},
-					}}
-				/>
-				<VictoryArea
-					data={throughputData}
-					interpolation="monotoneX"
-					style={{
-						data: {
-							stroke: theme.primary,
-							strokeWidth: 3,
-							fill: theme.areaFill,
-							fillOpacity: 0.15,
-						},
-					}}
-				/>
-				<VictoryLine
-					data={warrantyData}
-					interpolation="monotoneX"
-					style={{
-						data: {
-							stroke: theme.warrantyStroke,
-							strokeWidth: 2,
-						},
-					}}
-				/>
-			</VictoryChart>
+					<VictoryAxis
+						dependentAxis
+						tickValues={[0, 3, 6, 9, 12, 15]}
+						tickFormat={(v: number) =>
+							v === 0 || v === 12 || v === 15 ? `${v} MWh` : ""
+						}
+						style={{
+							axis: { stroke: "none" },
+							grid: { stroke: theme.grid, strokeDasharray: "3 3" },
+						}}
+					/>
+					{/* Reference lines */}
+					<VictoryLine
+						data={[
+							{ x: 9, y: 0 },
+							{ x: 9, y: 15 },
+						]}
+						labels={["Limit hit", ""]}
+						labelComponent={
+							<VictoryLabel
+								renderInPortal={false}
+								textAnchor="middle"
+								dy={-6}
+								style={{ fontSize: 10, fill: theme.referenceLineAlert }}
+							/>
+						}
+						style={{
+							data: {
+								stroke: theme.referenceLineAlert,
+								strokeDasharray: "4 4",
+							},
+						}}
+					/>
+					<VictoryLine
+						data={[
+							{ x: 1, y: 13 },
+							{ x: 10, y: 13 },
+						]}
+						style={{
+							data: {
+								stroke: theme.referenceLineAlert,
+								strokeDasharray: "4 4",
+							},
+						}}
+					/>
+					<VictoryLine
+						data={[
+							{ x: 1, y: 9 },
+							{ x: 10, y: 9 },
+						]}
+						style={{
+							data: {
+								stroke: theme.referenceLine,
+								strokeDasharray: "4 4",
+							},
+						}}
+					/>
+					<VictoryLine
+						data={[
+							{ x: 2, y: 0 },
+							{ x: 2, y: 15 },
+						]}
+						labels={["Now", ""]}
+						labelComponent={
+							<VictoryLabel
+								renderInPortal={false}
+								textAnchor="middle"
+								dy={-6}
+								style={{ fontSize: 10, fill: theme.referenceLineLight }}
+							/>
+						}
+						style={{
+							data: {
+								stroke: theme.referenceLineLight,
+								strokeDasharray: "4 4",
+							},
+						}}
+					/>
+					<VictoryArea
+						data={throughputData}
+						interpolation="monotoneX"
+						style={{
+							data: {
+								stroke: theme.primary,
+								strokeWidth: 3,
+								fill: theme.areaFill,
+								fillOpacity: 0.15,
+							},
+						}}
+					/>
+					<VictoryLine
+						data={warrantyData}
+						interpolation="monotoneX"
+						style={{
+							data: {
+								stroke: theme.warrantyStroke,
+								strokeWidth: 2,
+							},
+						}}
+					/>
+				</VictoryChart>
+			</div>
 		</div>
 	);
 }

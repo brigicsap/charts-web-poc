@@ -1,8 +1,10 @@
 "use client";
 
 import * as echarts from "echarts";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useChartTheme } from "../../ChartThemeContext";
+import LegendValues from "../../chartjs/components/LegendValues";
+import { round2 } from "./utils";
 
 const data = [
 	{ year: 1, throughput: 1.1, warranty: 15 },
@@ -25,12 +27,43 @@ export default function ThroughputWarrantyLimit() {
 	const ref = useRef<HTMLDivElement>(null);
 	const chartRef = useRef<echarts.ECharts | null>(null);
 	const { theme } = useChartTheme();
+	const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+	const throughputAvg = round2(
+		throughputData.reduce((sum, v) => sum + v, 0) / throughputData.length,
+	);
+	const warrantyAvg = round2(
+		warrantyData.reduce((sum, v) => sum + v, 0) / warrantyData.length,
+	);
+	const legendItems = [
+		{
+			label: "Throughput",
+			color: theme.primary,
+			valueText: `${round2(
+				hoverIndex == null
+					? throughputAvg
+					: (throughputData[hoverIndex] ?? throughputAvg),
+			).toFixed(2)} MWh`,
+		},
+		{
+			label: "Warranty",
+			color: theme.warrantyStroke,
+			valueText: `${round2(
+				hoverIndex == null
+					? warrantyAvg
+					: (warrantyData[hoverIndex] ?? warrantyAvg),
+			).toFixed(2)} MWh`,
+		},
+	];
 
 	useEffect(() => {
 		if (!ref.current) return;
 		chartRef.current = echarts.init(ref.current);
 		const handleResize = () => chartRef.current?.resize();
 		window.addEventListener("resize", handleResize);
+		chartRef.current.on("mouseover", (params) => {
+			if (typeof params.dataIndex === "number") setHoverIndex(params.dataIndex);
+		});
+		chartRef.current.on("globalout", () => setHoverIndex(null));
 		return () => {
 			window.removeEventListener("resize", handleResize);
 			chartRef.current?.dispose();
@@ -39,7 +72,18 @@ export default function ThroughputWarrantyLimit() {
 
 	useEffect(() => {
 		chartRef.current?.setOption({
-			tooltip: { trigger: "axis" },
+			tooltip: {
+				trigger: "axis",
+				formatter: (params: unknown) => {
+					const items = params as Array<{ seriesName: string; value: number }>;
+					return items
+						.map(
+							(p) =>
+								`${p.seriesName}: ${round2(Number(p.value)).toFixed(2)} MWh`,
+						)
+						.join("<br/>");
+				},
+			},
 			grid: { top: 40, bottom: 30, left: 60, right: 60 },
 			xAxis: {
 				type: "category",
@@ -141,5 +185,10 @@ export default function ThroughputWarrantyLimit() {
 		});
 	}, [theme]);
 
-	return <div ref={ref} className="w-full h-80" />;
+	return (
+		<div className="w-full h-80 flex flex-col gap-2">
+			<LegendValues items={legendItems} isInteractive={hoverIndex != null} />
+			<div ref={ref} className="w-full flex-1 min-h-0" />
+		</div>
+	);
 }

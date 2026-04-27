@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
 	Area,
 	AreaChart,
@@ -12,6 +13,8 @@ import {
 	YAxis,
 } from "recharts";
 import { useChartTheme } from "../../ChartThemeContext";
+import LegendValues from "../../chartjs/components/LegendValues";
+import { round2 } from "./utils";
 
 const data = [
 	{ year: 1, throughput: 1.1, warranty: 15 },
@@ -28,10 +31,49 @@ const data = [
 
 export default function ThroughputWarrantyLimit() {
 	const { theme } = useChartTheme();
+	const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+	const throughputAvg = round2(
+		data.reduce((sum, row) => sum + row.throughput, 0) / data.length,
+	);
+	const warrantyAvg = round2(
+		data.reduce((sum, row) => sum + row.warranty, 0) / data.length,
+	);
+	const legendItems = [
+		{
+			label: "Throughput",
+			color: theme.primary,
+			valueText: `${round2(
+				hoverIndex == null
+					? throughputAvg
+					: (data[hoverIndex]?.throughput ?? throughputAvg),
+			).toFixed(2)} MWh`,
+		},
+		{
+			label: "Warranty",
+			color: theme.warrantyStroke,
+			valueText: `${round2(
+				hoverIndex == null
+					? warrantyAvg
+					: (data[hoverIndex]?.warranty ?? warrantyAvg),
+			).toFixed(2)} MWh`,
+		},
+	];
 	return (
-		<div className="w-full h-80">
+		<div className="w-full h-80 flex flex-col gap-2">
+			<LegendValues items={legendItems} isInteractive={hoverIndex != null} />
 			<ResponsiveContainer width="100%" height="100%">
-				<AreaChart data={data} margin={{ top: 30 }}>
+				<AreaChart
+					data={data}
+					margin={{ top: 10 }}
+					onMouseMove={(state) =>
+						setHoverIndex(
+							state?.isTooltipActive
+								? (state.activeTooltipIndex ?? null)
+								: null,
+						)
+					}
+					onMouseLeave={() => setHoverIndex(null)}
+				>
 					<CartesianGrid vertical={false} strokeDasharray="3 3" />
 					<XAxis
 						dataKey="year"
@@ -61,7 +103,12 @@ export default function ThroughputWarrantyLimit() {
 						fontSize={12}
 						tickFormatter={(v: number) => `${v}%`}
 					/>
-					<Tooltip />
+					<Tooltip
+						formatter={(value: number, name: string) => [
+							`${round2(Number(value)).toFixed(2)} MWh`,
+							name,
+						]}
+					/>
 					<ReferenceLine
 						x={9}
 						stroke={theme.referenceLineAlert}

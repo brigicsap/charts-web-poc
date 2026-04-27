@@ -7,6 +7,7 @@ const links = [
 	{ href: "/recharts", label: "Recharts" },
 	{ href: "/victory", label: "Victory" },
 	{ href: "/echarts", label: "ECharts" },
+	{ href: "/chartjs", label: "Chart.js" },
 ];
 
 export default function NavLinks() {

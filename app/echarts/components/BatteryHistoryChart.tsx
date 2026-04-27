@@ -1,9 +1,11 @@
 "use client";
 
 import * as echarts from "echarts";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useChartTheme } from "../../ChartThemeContext";
+import LegendValues from "../../chartjs/components/LegendValues";
 import rawData from "../../mockData/batteryHistoryMockDay.json";
+import { buildQuarterHourSlots, formatDailyTimeTick, round2 } from "./utils";
 
 const dataMap = new Map(
 	rawData.datapoints.map((dp) => [
@@ -12,11 +14,7 @@ const dataMap = new Map(
 	]),
 );
 
-const allSlots = Array.from({ length: 96 }, (_, i) => {
-	const h = String(Math.floor(i / 4)).padStart(2, "0");
-	const m = String((i % 4) * 15).padStart(2, "0");
-	return `${h}:${m}`;
-});
+const allSlots = buildQuarterHourSlots();
 
 const batteryData = allSlots.map((time) => {
 	const val = dataMap.get(time);
@@ -31,12 +29,34 @@ export default function BatteryHistoryChart() {
 	const ref = useRef<HTMLDivElement>(null);
 	const chartRef = useRef<echarts.ECharts | null>(null);
 	const { theme } = useChartTheme();
+	const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+	const nonNull = batteryData
+		.map((v) => (v == null ? null : Number(v)))
+		.filter((v): v is number => v != null);
+	const avg = nonNull.length
+		? round2(nonNull.reduce((sum, v) => sum + v, 0) / nonNull.length)
+		: 0;
+	const activeVal = hoverIndex == null ? null : batteryData[hoverIndex];
+	const legendItems = [
+		{
+			label: "Battery",
+			color: theme.primary,
+			valueText:
+				activeVal == null
+					? `${avg.toFixed(2)}%`
+					: `${round2(Number(activeVal)).toFixed(2)}%`,
+		},
+	];
 
 	useEffect(() => {
 		if (!ref.current) return;
 		chartRef.current = echarts.init(ref.current);
 		const handleResize = () => chartRef.current?.resize();
 		window.addEventListener("resize", handleResize);
+		chartRef.current.on("mouseover", (params) => {
+			if (typeof params.dataIndex === "number") setHoverIndex(params.dataIndex);
+		});
+		chartRef.current.on("globalout", () => setHoverIndex(null));
 		return () => {
 			window.removeEventListener("resize", handleResize);
 			chartRef.current?.dispose();
@@ -51,25 +71,19 @@ export default function BatteryHistoryChart() {
 					type: "line",
 					lineStyle: { color: theme.secondary, type: "dashed" },
 				},
-			},
-			legend: {
-				data: ["Battery"],
-				top: 0,
-				right: 0,
+				formatter: (params: unknown) => {
+					const item = (
+						params as Array<{ seriesName: string; value: number | null }>
+					)[0];
+					return `${item.seriesName}: ${round2(Number(item.value ?? 0)).toFixed(2)}%`;
+				},
 			},
 			grid: { top: 40, bottom: 30, left: 50, right: 20 },
 			xAxis: {
 				type: "category",
 				data: allSlots,
 				axisLabel: {
-					formatter: (v: string) => {
-						const h = parseInt(v.slice(0, 2));
-						if (h === 0 && v === "00:00") return "12am";
-						if (h === 6 && v === "06:00") return "6am";
-						if (h === 12 && v === "12:00") return "12pm";
-						if (h === 18 && v === "18:00") return "6pm";
-						return "";
-					},
+					formatter: (v: string) => formatDailyTimeTick(v),
 				},
 			},
 			yAxis: {
@@ -119,5 +133,10 @@ export default function BatteryHistoryChart() {
 		});
 	}, [theme]);
 
-	return <div ref={ref} className="w-full h-80" />;
+	return (
+		<div className="w-full h-80 flex flex-col gap-2">
+			<LegendValues items={legendItems} isInteractive={hoverIndex != null} />
+			<div ref={ref} className="w-full flex-1 min-h-0" />
+		</div>
+	);
 }

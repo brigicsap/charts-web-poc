@@ -3,16 +3,11 @@
 import * as echarts from "echarts";
 import { useEffect, useRef, useState } from "react";
 import { useChartTheme } from "../../ChartThemeContext";
+import LegendValues from "../../chartjs/components/LegendValues";
 import rawData from "../../mockData/homeUsageMockDay.json";
+import { formatDailyTimeTick, parseConstituentSeries, round2 } from "./utils";
 
-const parsed = rawData.datapoints.map((dp) => {
-	const time = dp.from.slice(11, 16);
-	const map: Record<string, number | string> = { time };
-	for (const c of dp.constituentDatapoints) {
-		map[c.type] = c.energy;
-	}
-	return map;
-});
+const parsed = parseConstituentSeries(rawData.datapoints);
 
 const times = parsed.map((d) => d.time);
 const solarData = parsed.map((d) => d["solar-consumption"] ?? 0);
@@ -29,6 +24,40 @@ export default function HomeUsageChart() {
 	const chartRef = useRef<echarts.ECharts | null>(null);
 	const { theme } = useChartTheme();
 	const [activeIndex, setActiveIndex] = useState<number | null>(null);
+	const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+	const legendIndex = activeIndex ?? hoverIndex;
+	const solarSeries = solarData.map((v) => Number(v));
+	const gridSeries = gridData.map((v) => Number(v));
+	const batterySeries = batteryData.map((v) => Number(v));
+	const legendItems = [
+		{
+			label: "Solar",
+			color: theme.secondary,
+			valueText: `${round2(
+				legendIndex == null
+					? solarSeries.reduce((sum, v) => sum + v, 0)
+					: (solarSeries[legendIndex] ?? 0),
+			).toFixed(2)} kWh`,
+		},
+		{
+			label: "Grid",
+			color: theme.tertiary,
+			valueText: `${round2(
+				legendIndex == null
+					? gridSeries.reduce((sum, v) => sum + v, 0)
+					: (gridSeries[legendIndex] ?? 0),
+			).toFixed(2)} kWh`,
+		},
+		{
+			label: "Battery",
+			color: theme.primary,
+			valueText: `${round2(
+				legendIndex == null
+					? batterySeries.reduce((sum, v) => sum + v, 0)
+					: (batterySeries[legendIndex] ?? 0),
+			).toFixed(2)} kWh`,
+		},
+	];
 
 	useEffect(() => {
 		if (!ref.current) return;
@@ -40,6 +69,10 @@ export default function HomeUsageChart() {
 			const idx = params.dataIndex as number;
 			setActiveIndex((prev) => (prev === idx ? null : idx));
 		});
+		chart.on("mouseover", (params) => {
+			if (typeof params.dataIndex === "number") setHoverIndex(params.dataIndex);
+		});
+		chart.on("globalout", () => setHoverIndex(null));
 		return () => {
 			window.removeEventListener("resize", handleResize);
 			chart.dispose();
@@ -60,11 +93,15 @@ export default function HomeUsageChart() {
 				axisPointer: {
 					type: "shadow",
 				},
-			},
-			legend: {
-				data: ["Solar", "Grid", "Battery"],
-				top: 0,
-				right: 0,
+				formatter: (params: unknown) => {
+					const items = params as Array<{ seriesName: string; value: number }>;
+					return items
+						.map(
+							(p) =>
+								`${p.seriesName}: ${round2(Number(p.value)).toFixed(2)} kWh`,
+						)
+						.join("<br/>");
+				},
 			},
 			grid: {
 				show: true,
@@ -92,14 +129,7 @@ export default function HomeUsageChart() {
 				type: "category",
 				data: times,
 				axisLabel: {
-					formatter: (v: string) => {
-						const h = parseInt(v.slice(0, 2));
-						if (h === 0 && v === "00:00") return "12am";
-						if (h === 6 && v === "06:00") return "6am";
-						if (h === 12 && v === "12:00") return "12pm";
-						if (h === 18 && v === "18:00") return "6pm";
-						return "";
-					},
+					formatter: (v: string) => formatDailyTimeTick(v),
 				},
 			},
 			yAxis: {
@@ -180,5 +210,10 @@ export default function HomeUsageChart() {
 		});
 	}, [theme, activeIndex]);
 
-	return <div ref={ref} className="w-full h-80" />;
+	return (
+		<div className="w-full h-80 flex flex-col gap-2">
+			<LegendValues items={legendItems} isInteractive={legendIndex != null} />
+			<div ref={ref} className="w-full flex-1 min-h-0" />
+		</div>
+	);
 }
