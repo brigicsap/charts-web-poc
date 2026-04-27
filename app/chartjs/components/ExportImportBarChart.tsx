@@ -23,8 +23,7 @@ const exportData = parsed.map((d) => Number(d["grid-export"] ?? 0));
 export default function ExportImportBarChart() {
 	const { theme } = useChartTheme();
 	const [activeIndex, setActiveIndex] = useState<number | null>(null);
-	const [hoverIndex, setHoverIndex] = useState<number | null>(null);
-	const legendIndex = activeIndex ?? hoverIndex;
+	const legendIndex = activeIndex;
 
 	const opacity = (i: number) =>
 		activeIndex === null || activeIndex === i ? 1 : 0.3;
@@ -94,9 +93,6 @@ export default function ExportImportBarChart() {
 		layout: {
 			padding: { top: 30, right: 0, bottom: 0, left: 0 },
 		},
-		onHover: (_, elements) => {
-			setHoverIndex(elements.length ? elements[0].index : null);
-		},
 		onClick: (_, elements) => {
 			if (!elements.length) return;
 			const idx = elements[0].index;
@@ -122,13 +118,14 @@ export default function ExportImportBarChart() {
 		scales: {
 			x: {
 				stacked: true,
-				grid: { display: false },
+				grid: { drawOnChartArea: false },
 				border: {
 					display: true,
 					color: theme.grid,
 					width: 1,
 				},
 				ticks: {
+					maxRotation: 0,
 					font: { size: 12 },
 					callback: (_, index) => {
 						const t = labels[index] ?? "";

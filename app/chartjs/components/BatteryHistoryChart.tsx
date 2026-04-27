@@ -31,7 +31,7 @@ const batteryData = labels.map((time) => {
 
 export default function BatteryHistoryChart() {
 	const { theme } = useChartTheme();
-	const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+	const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
 	const refAreaPlugin = useMemo<Plugin<"line">>(
 		() => ({
@@ -92,8 +92,10 @@ export default function BatteryHistoryChart() {
 		layout: {
 			padding: { top: 30, right: 0, bottom: 0, left: 0 },
 		},
-		onHover: (_, elements) => {
-			setHoverIndex(elements.length ? elements[0].index : null);
+		onClick: (_, elements) => {
+			if (!elements.length) return;
+			const idx = elements[0].index;
+			setActiveIndex((prev) => (prev === idx ? null : idx));
 		},
 		interaction: {
 			mode: "index",
@@ -114,13 +116,14 @@ export default function BatteryHistoryChart() {
 		},
 		scales: {
 			x: {
-				grid: { display: false },
+				grid: { drawOnChartArea: false },
 				border: {
 					display: true,
 					color: theme.grid,
 					width: 1,
 				},
 				ticks: {
+					maxRotation: 0,
 					font: { size: 12 },
 					callback: (_, index) => {
 						const t = labels[index] ?? "";
@@ -152,7 +155,7 @@ export default function BatteryHistoryChart() {
 			: 0;
 
 	const interactiveBattery =
-		hoverIndex == null ? null : (batteryData[hoverIndex] as number | null);
+		activeIndex == null ? null : (batteryData[activeIndex] as number | null);
 
 	const legendItems = [
 		{
@@ -167,7 +170,7 @@ export default function BatteryHistoryChart() {
 
 	return (
 		<div className="w-full h-80 flex flex-col gap-2">
-			<LegendValues items={legendItems} isInteractive={hoverIndex != null} />
+			<LegendValues items={legendItems} isInteractive={activeIndex != null} />
 			<div className="flex-1 min-h-0">
 				<Line data={data} options={options} plugins={[refAreaPlugin]} />
 			</div>

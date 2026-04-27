@@ -29,14 +29,14 @@ export default function BatteryHistoryChart() {
 	const ref = useRef<HTMLDivElement>(null);
 	const chartRef = useRef<echarts.ECharts | null>(null);
 	const { theme } = useChartTheme();
-	const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+	const [activeIndex, setActiveIndex] = useState<number | null>(null);
 	const nonNull = batteryData
 		.map((v) => (v == null ? null : Number(v)))
 		.filter((v): v is number => v != null);
 	const avg = nonNull.length
 		? round2(nonNull.reduce((sum, v) => sum + v, 0) / nonNull.length)
 		: 0;
-	const activeVal = hoverIndex == null ? null : batteryData[hoverIndex];
+	const activeVal = activeIndex == null ? null : batteryData[activeIndex];
 	const legendItems = [
 		{
 			label: "Battery",
@@ -53,10 +53,12 @@ export default function BatteryHistoryChart() {
 		chartRef.current = echarts.init(ref.current);
 		const handleResize = () => chartRef.current?.resize();
 		window.addEventListener("resize", handleResize);
-		chartRef.current.on("mouseover", (params) => {
-			if (typeof params.dataIndex === "number") setHoverIndex(params.dataIndex);
+		chartRef.current.on("click", (params) => {
+			if (typeof params.dataIndex === "number") {
+				const idx = params.dataIndex;
+				setActiveIndex((prev) => (prev === idx ? null : idx));
+			}
 		});
-		chartRef.current.on("globalout", () => setHoverIndex(null));
 		return () => {
 			window.removeEventListener("resize", handleResize);
 			chartRef.current?.dispose();
@@ -82,7 +84,14 @@ export default function BatteryHistoryChart() {
 			xAxis: {
 				type: "category",
 				data: allSlots,
+				axisTick: {
+					show: true,
+					alignWithLabel: true,
+					length: 6,
+					interval: (index: number) => index % 12 === 0,
+				},
 				axisLabel: {
+					interval: (index: number) => index % 24 === 0,
 					formatter: (v: string) => formatDailyTimeTick(v),
 				},
 			},
@@ -135,7 +144,7 @@ export default function BatteryHistoryChart() {
 
 	return (
 		<div className="w-full h-80 flex flex-col gap-2">
-			<LegendValues items={legendItems} isInteractive={hoverIndex != null} />
+			<LegendValues items={legendItems} isInteractive={activeIndex != null} />
 			<div ref={ref} className="w-full flex-1 min-h-0" />
 		</div>
 	);

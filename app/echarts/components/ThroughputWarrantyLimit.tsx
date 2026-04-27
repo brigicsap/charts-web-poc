@@ -27,7 +27,7 @@ export default function ThroughputWarrantyLimit() {
 	const ref = useRef<HTMLDivElement>(null);
 	const chartRef = useRef<echarts.ECharts | null>(null);
 	const { theme } = useChartTheme();
-	const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+	const [activeIndex, setActiveIndex] = useState<number | null>(null);
 	const throughputAvg = round2(
 		throughputData.reduce((sum, v) => sum + v, 0) / throughputData.length,
 	);
@@ -39,18 +39,18 @@ export default function ThroughputWarrantyLimit() {
 			label: "Throughput",
 			color: theme.primary,
 			valueText: `${round2(
-				hoverIndex == null
+				activeIndex == null
 					? throughputAvg
-					: (throughputData[hoverIndex] ?? throughputAvg),
+					: (throughputData[activeIndex] ?? throughputAvg),
 			).toFixed(2)} MWh`,
 		},
 		{
 			label: "Warranty",
 			color: theme.warrantyStroke,
 			valueText: `${round2(
-				hoverIndex == null
+				activeIndex == null
 					? warrantyAvg
-					: (warrantyData[hoverIndex] ?? warrantyAvg),
+					: (warrantyData[activeIndex] ?? warrantyAvg),
 			).toFixed(2)} MWh`,
 		},
 	];
@@ -60,10 +60,12 @@ export default function ThroughputWarrantyLimit() {
 		chartRef.current = echarts.init(ref.current);
 		const handleResize = () => chartRef.current?.resize();
 		window.addEventListener("resize", handleResize);
-		chartRef.current.on("mouseover", (params) => {
-			if (typeof params.dataIndex === "number") setHoverIndex(params.dataIndex);
+		chartRef.current.on("click", (params) => {
+			if (typeof params.dataIndex === "number") {
+				const idx = params.dataIndex;
+				setActiveIndex((prev) => (prev === idx ? null : idx));
+			}
 		});
-		chartRef.current.on("globalout", () => setHoverIndex(null));
 		return () => {
 			window.removeEventListener("resize", handleResize);
 			chartRef.current?.dispose();
@@ -187,7 +189,7 @@ export default function ThroughputWarrantyLimit() {
 
 	return (
 		<div className="w-full h-80 flex flex-col gap-2">
-			<LegendValues items={legendItems} isInteractive={hoverIndex != null} />
+			<LegendValues items={legendItems} isInteractive={activeIndex != null} />
 			<div ref={ref} className="w-full flex-1 min-h-0" />
 		</div>
 	);

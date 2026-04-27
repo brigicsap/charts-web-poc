@@ -35,14 +35,18 @@ const data = buildQuarterHourSlots().map((time) => {
 export default function BatteryHistoryChart() {
 	const { theme } = useChartTheme();
 	const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+	// Extract non-null battery values for average calculation
 	const nonNull = data
 		.map((d) => d.battery)
 		.filter((v): v is number => v != null);
+	// Calculate average battery percentage for legend when no point is active
 	const avg = nonNull.length
 		? round2(nonNull.reduce((sum, v) => sum + v, 0) / nonNull.length)
 		: 0;
+	// Get the active battery value based on activeIndex for legend display
 	const activeVal =
 		hoverIndex == null ? null : (data[hoverIndex]?.battery as number | null);
+	// Legend items with dynamic value text based on active index or average
 	const legendItems = [
 		{
 			label: "Battery",

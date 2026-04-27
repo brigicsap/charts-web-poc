@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
 	VictoryArea,
 	VictoryAxis,
@@ -32,30 +32,50 @@ const warrantyData = data.map((d) => ({ x: d.year, y: d.warranty }));
 
 export default function ThroughputWarrantyLimit() {
 	const { theme } = useChartTheme();
-	const [hoverYear, setHoverYear] = useState<number | null>(null);
+	const [activeYear, setActiveYear] = useState<number | null>(null);
+	const hoverRef = useRef<number | null>(null);
 	const throughputAvg = round2(
 		data.reduce((sum, row) => sum + row.throughput, 0) / data.length,
 	);
 	const warrantyAvg = round2(
 		data.reduce((sum, row) => sum + row.warranty, 0) / data.length,
 	);
-	const hoverPoint =
-		hoverYear == null ? null : data.find((d) => d.year === hoverYear);
+	const activePoint =
+		activeYear == null ? null : data.find((d) => d.year === activeYear);
 	const legendItems = [
 		{
 			label: "Throughput",
 			color: theme.primary,
-			valueText: `${round2(hoverPoint?.throughput ?? throughputAvg).toFixed(2)} MWh`,
+			valueText: `${round2(activePoint?.throughput ?? throughputAvg).toFixed(2)} MWh`,
 		},
 		{
 			label: "Warranty",
 			color: theme.warrantyStroke,
-			valueText: `${round2(hoverPoint?.warranty ?? warrantyAvg).toFixed(2)} MWh`,
+			valueText: `${round2(activePoint?.warranty ?? warrantyAvg).toFixed(2)} MWh`,
 		},
 	];
 	return (
-		<div className="w-full h-80 flex flex-col gap-2">
-			<LegendValues items={legendItems} isInteractive={hoverPoint != null} />
+		// biome-ignore lint/a11y/useSemanticElements: chart interaction wrapper
+		<div
+			className="w-full h-80 flex flex-col gap-2"
+			role="button"
+			tabIndex={0}
+			onClick={() => {
+				const yr = hoverRef.current;
+				if (yr != null) {
+					setActiveYear((prev) => (prev === yr ? null : yr));
+				}
+			}}
+			onKeyDown={(e) => {
+				if (e.key === "Enter" || e.key === " ") {
+					const yr = hoverRef.current;
+					if (yr != null) {
+						setActiveYear((prev) => (prev === yr ? null : yr));
+					}
+				}
+			}}
+		>
+			<LegendValues items={legendItems} isInteractive={activePoint != null} />
 			<div className="flex-1 min-h-0">
 				<VictoryChart
 					padding={{ top: 60, bottom: 40, left: 60, right: 60 }}
@@ -68,9 +88,11 @@ export default function ThroughputWarrantyLimit() {
 							onActivated={(points) => {
 								if (!points.length) return;
 								const p = points[0] as { x?: number };
-								setHoverYear(typeof p.x === "number" ? p.x : null);
+								hoverRef.current = typeof p.x === "number" ? p.x : null;
 							}}
-							onDeactivated={() => setHoverYear(null)}
+							onDeactivated={() => {
+								hoverRef.current = null;
+							}}
 							labelComponent={<VictoryTooltip />}
 						/>
 					}
@@ -78,7 +100,19 @@ export default function ThroughputWarrantyLimit() {
 					<VictoryAxis
 						tickValues={[1, 2, 10]}
 						tickFormat={(v: number) => `Yr${v}`}
-						style={{ grid: { stroke: "none" } }}
+						style={{
+							axis: { stroke: theme.grid, strokeWidth: 1 },
+							grid: { stroke: "none" },
+						}}
+					/>
+					<VictoryAxis
+						orientation="top"
+						style={{
+							axis: { stroke: theme.grid, strokeWidth: 1 },
+							ticks: { size: 0 },
+							tickLabels: { fill: "none" },
+							grid: { stroke: "none" },
+						}}
 					/>
 					<VictoryAxis
 						dependentAxis
@@ -87,8 +121,18 @@ export default function ThroughputWarrantyLimit() {
 							v === 0 || v === 12 || v === 15 ? `${v} MWh` : ""
 						}
 						style={{
-							axis: { stroke: "none" },
+							axis: { stroke: theme.grid, strokeWidth: 1 },
 							grid: { stroke: theme.grid, strokeDasharray: "3 3" },
+						}}
+					/>
+					<VictoryAxis
+						dependentAxis
+						orientation="right"
+						style={{
+							axis: { stroke: theme.grid, strokeWidth: 1 },
+							ticks: { size: 0 },
+							tickLabels: { fill: "none" },
+							grid: { stroke: "none" },
 						}}
 					/>
 					{/* Reference lines */}

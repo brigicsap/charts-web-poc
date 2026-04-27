@@ -11,51 +11,98 @@ import {
 } from "victory";
 import { useChartTheme } from "../../ChartThemeContext";
 import LegendValues from "../../chartjs/components/LegendValues";
-import rawData from "../../mockData/homeUsageMockDay.json";
+import rawDayData from "../../mockData/homeUsageMockDay.json";
+import rawWeekData from "../../mockData/homeUsageMockWeek.json";
 import { formatDailyTimeTick, parseConstituentSeries, round2 } from "./utils";
 
-const parsed = parseConstituentSeries(rawData.datapoints);
+type View = "day" | "week";
 
-const solarData = parsed.map((d) => ({
-	x: d.time,
-	y: d["solar-consumption"] ?? 0,
-}));
-const gridData = parsed.map((d) => ({
-	x: d.time,
-	y: d["grid-consumption"] ?? 0,
-}));
-const batteryData = parsed.map((d) => ({
-	x: d.time,
-	y: d["battery-consumption"] ?? 0,
-}));
+function formatWeekLabel(time: string): string {
+	const date = new Date(time);
+	return date.toLocaleDateString("en-GB", { weekday: "short" });
+}
 
-const maxTotal = Math.max(
-	...parsed.map(
-		(d) =>
-			Number(d["solar-consumption"] ?? 0) +
-			Number(d["grid-consumption"] ?? 0) +
-			Number(d["battery-consumption"] ?? 0),
-	),
-);
-const backgroundData = parsed.map((d) => ({ x: d.time, y: maxTotal }));
+function buildVictoryData(parsed: Record<string, number | string>[]) {
+	const solar = parsed.map((d) => ({
+		x: d.time,
+		y: d["solar-consumption"] ?? 0,
+	}));
+	const grid = parsed.map((d) => ({
+		x: d.time,
+		y: d["grid-consumption"] ?? 0,
+	}));
+	const battery = parsed.map((d) => ({
+		x: d.time,
+		y: d["battery-consumption"] ?? 0,
+	}));
+	const maxTotal = Math.max(
+		...parsed.map(
+			(d) =>
+				Number(d["solar-consumption"] ?? 0) +
+				Number(d["grid-consumption"] ?? 0) +
+				Number(d["battery-consumption"] ?? 0),
+		),
+	);
+	const background = parsed.map((d) => ({ x: d.time, y: maxTotal }));
+	const GAP = 0.02;
+	const gap1 = parsed.map((d) => ({
+		x: d.time,
+		y: Number(d["solar-consumption"] ?? 0) > 0 ? GAP : 0,
+	}));
+	const gap2 = parsed.map((d) => ({
+		x: d.time,
+		y: Number(d["grid-consumption"] ?? 0) > 0 ? GAP : 0,
+	}));
+	return { solar, grid, battery, background, parsed, gap1, gap2 };
+}
 
-const xTickValues = ["00:00", "06:00", "12:00", "18:00"];
-const xTickFormat = (t: string) => formatDailyTimeTick(t, t);
+const dayParsed = parseConstituentSeries(rawDayData.datapoints);
+const dayVictory = buildVictoryData(dayParsed);
+// Append end-of-day marker for full 24hr axis
+const endMarker = { x: "24:00", y: 0 };
+dayVictory.solar.push(endMarker);
+dayVictory.grid.push(endMarker);
+dayVictory.battery.push(endMarker);
+dayVictory.background.push(endMarker);
+dayVictory.gap1.push(endMarker);
+dayVictory.gap2.push(endMarker);
+
+const weekParsed = rawWeekData.datapoints.map((dp) => {
+	const map: Record<string, number | string> = { time: dp.from };
+	for (const c of dp.constituentDatapoints) {
+		map[c.type] = c.energy;
+	}
+	return map;
+});
+const weekVictory = buildVictoryData(weekParsed);
+
+const dayXTickValues = ["00:00", "06:00", "12:00", "18:00", "24:00"];
+const dayXTickFormat = (t: string) => formatDailyTimeTick(t, t);
+const weekXTickValues = weekParsed.map((d) => String(d.time));
+const weekXTickFormat = (t: string) => formatWeekLabel(t);
 
 type DataProps = { datum?: { x?: string | number } };
 
 export default function BarChartDemo() {
 	const { theme } = useChartTheme();
 	const [activeX, setActiveX] = useState<string | null>(null);
+	const [view, setView] = useState<View>("day");
+
+	const d = view === "day" ? dayVictory : weekVictory;
+	const xTickValues = view === "day" ? dayXTickValues : weekXTickValues;
+	const xTickFormat = view === "day" ? dayXTickFormat : weekXTickFormat;
+
 	const activeIndex =
 		activeX == null
 			? null
-			: parsed.findIndex((d) => String(d.time) === activeX);
-	const solarSeries = parsed.map((d) => Number(d["solar-consumption"] ?? 0));
-	const gridSeries = parsed.map((d) => Number(d["grid-consumption"] ?? 0));
-	const batterySeries = parsed.map((d) =>
-		Number(d["battery-consumption"] ?? 0),
+			: d.parsed.findIndex((p) => String(p.time) === activeX);
+
+	const solarSeries = d.parsed.map((p) => Number(p["solar-consumption"] ?? 0));
+	const gridSeries = d.parsed.map((p) => Number(p["grid-consumption"] ?? 0));
+	const batterySeries = d.parsed.map((p) =>
+		Number(p["battery-consumption"] ?? 0),
 	);
+
 	const legendItems = [
 		{
 			label: "Solar",
@@ -106,6 +153,28 @@ export default function BarChartDemo() {
 
 	return (
 		<div className="w-full h-80 flex flex-col gap-2">
+			<div className="flex justify-end gap-1">
+				<button
+					type="button"
+					onClick={() => {
+						setView("day");
+						setActiveX(null);
+					}}
+					className={`px-3 py-1 text-sm rounded ${view === "day" ? "bg-gray-800 text-white" : "bg-gray-200 text-gray-700"}`}
+				>
+					Day
+				</button>
+				<button
+					type="button"
+					onClick={() => {
+						setView("week");
+						setActiveX(null);
+					}}
+					className={`px-3 py-1 text-sm rounded ${view === "week" ? "bg-gray-800 text-white" : "bg-gray-200 text-gray-700"}`}
+				>
+					Week
+				</button>
+			</div>
 			<LegendValues
 				items={legendItems}
 				isInteractive={activeIndex != null && activeIndex >= 0}
@@ -120,6 +189,15 @@ export default function BarChartDemo() {
 						tickFormat={xTickFormat}
 						style={{
 							axis: { stroke: theme.grid, strokeWidth: 1 },
+							grid: { stroke: "none" },
+						}}
+					/>
+					<VictoryAxis
+						orientation="top"
+						style={{
+							axis: { stroke: theme.grid, strokeWidth: 1 },
+							ticks: { size: 0 },
+							tickLabels: { fill: "none" },
 							grid: { stroke: "none" },
 						}}
 					/>
@@ -141,8 +219,18 @@ export default function BarChartDemo() {
 						}
 						label="kWh"
 					/>
+					<VictoryAxis
+						dependentAxis
+						orientation="right"
+						style={{
+							axis: { stroke: theme.grid, strokeWidth: 1 },
+							ticks: { size: 0 },
+							tickLabels: { fill: "none" },
+							grid: { stroke: "none" },
+						}}
+					/>
 					<VictoryBar
-						data={backgroundData}
+						data={d.background}
 						style={{
 							data: {
 								fill: (props: DataProps) =>
@@ -155,20 +243,47 @@ export default function BarChartDemo() {
 					/>
 					<VictoryStack>
 						<VictoryBar
-							data={solarData}
+							data={d.solar}
 							style={{ data: { fill: theme.secondary, opacity } }}
 							events={clickEvents}
 							labelComponent={<VictoryTooltip />}
 						/>
 						<VictoryBar
-							data={gridData}
+							data={d.gap1}
+							style={{ data: { fill: "transparent", stroke: "none" } }}
+						/>
+						<VictoryBar
+							data={d.grid}
 							style={{ data: { fill: theme.tertiary, opacity } }}
-							cornerRadius={{ topLeft: 2, topRight: 2 }}
+							cornerRadius={{
+								topLeft: (props: DataProps) => {
+									const idx = d.parsed.findIndex(
+										(p) => String(p.time) === String(props.datum?.x ?? ""),
+									);
+									return idx >= 0 &&
+										Number(d.parsed[idx]["battery-consumption"] ?? 0) === 0
+										? 2
+										: 0;
+								},
+								topRight: (props: DataProps) => {
+									const idx = d.parsed.findIndex(
+										(p) => String(p.time) === String(props.datum?.x ?? ""),
+									);
+									return idx >= 0 &&
+										Number(d.parsed[idx]["battery-consumption"] ?? 0) === 0
+										? 2
+										: 0;
+								},
+							}}
 							events={clickEvents}
 							labelComponent={<VictoryTooltip />}
 						/>
 						<VictoryBar
-							data={batteryData}
+							data={d.gap2}
+							style={{ data: { fill: "transparent", stroke: "none" } }}
+						/>
+						<VictoryBar
+							data={d.battery}
 							style={{
 								data: {
 									fill: theme.primary,

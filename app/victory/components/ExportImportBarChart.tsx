@@ -111,14 +111,23 @@ export default function ExportImportBarChart() {
 						tickFormat={xTickFormat}
 						offsetY={40}
 						style={{
-							axis: { stroke: "none" },
+							axis: { stroke: theme.grid, strokeWidth: 1 },
+							grid: { stroke: "none" },
+						}}
+					/>
+					<VictoryAxis
+						orientation="top"
+						style={{
+							axis: { stroke: theme.grid, strokeWidth: 1 },
+							ticks: { size: 0 },
+							tickLabels: { fill: "none" },
 							grid: { stroke: "none" },
 						}}
 					/>
 					<VictoryAxis
 						dependentAxis
 						style={{
-							axis: { stroke: "none" },
+							axis: { stroke: theme.grid, strokeWidth: 1 },
 							tickLabels: { fontSize: 10 },
 							grid: { stroke: theme.grid, strokeDasharray: "3 3" },
 						}}
@@ -132,6 +141,16 @@ export default function ExportImportBarChart() {
 							/>
 						}
 						label="£"
+					/>
+					<VictoryAxis
+						dependentAxis
+						orientation="right"
+						style={{
+							axis: { stroke: theme.grid, strokeWidth: 1 },
+							ticks: { size: 0 },
+							tickLabels: { fill: "none" },
+							grid: { stroke: "none" },
+						}}
 					/>
 					<VictoryBar
 						data={backgroundData}

@@ -85,7 +85,7 @@ function yToPixel(y: number) {
 export default function BatteryHistoryChart() {
 	const { theme } = useChartTheme();
 	const containerRef = useRef<HTMLDivElement>(null);
-	const [cursor, setCursor] = useState<{
+	const [activePoint, setActivePoint] = useState<{
 		px: number;
 		point: { x: number; y: number };
 	} | null>(null);
@@ -97,24 +97,22 @@ export default function BatteryHistoryChart() {
 			label: "Battery",
 			color: theme.primary,
 			valueText:
-				cursor == null
+				activePoint == null
 					? `${overall.toFixed(2)}%`
-					: `${round2(cursor.point.y).toFixed(2)}%`,
+					: `${round2(activePoint.point.y).toFixed(2)}%`,
 		},
 	];
 
-	const handleMouseMove = (e: React.MouseEvent) => {
+	const handleClick = (e: React.MouseEvent) => {
 		const container = containerRef.current;
 		if (!container) return;
 		const rect = container.getBoundingClientRect();
 		const svgX = ((e.clientX - rect.left) / rect.width) * CHART_WIDTH;
-		// Convert pixel to data x
 		const dataX = ((svgX - PADDING.left) / PLOT_WIDTH) * 95;
 		if (dataX < 0 || dataX > 95) {
-			setCursor(null);
+			setActivePoint(null);
 			return;
 		}
-		// Find nearest point
 		let nearest = allPoints[0];
 		let minDist = Infinity;
 		for (const p of allPoints) {
@@ -124,7 +122,11 @@ export default function BatteryHistoryChart() {
 				nearest = p;
 			}
 		}
-		setCursor({ px: svgX, point: nearest });
+		setActivePoint((prev) => {
+			if (prev && prev.point.x === nearest.x && prev.point.y === nearest.y)
+				return null;
+			return { px: svgX, point: nearest };
+		});
 	};
 
 	return (
@@ -132,23 +134,45 @@ export default function BatteryHistoryChart() {
 			ref={containerRef}
 			className="w-full h-80 relative flex flex-col gap-2"
 			role="img"
-			onMouseMove={handleMouseMove}
-			onMouseLeave={() => setCursor(null)}
+			onClick={handleClick}
+			onKeyDown={() => {}}
 		>
-			<LegendValues items={legendItems} isInteractive={cursor != null} />
+			<LegendValues items={legendItems} isInteractive={activePoint != null} />
 			<VictoryChart padding={PADDING} domain={{ x: [0, 95], y: [0, 100] }}>
 				<VictoryAxis
 					tickValues={xTickValues}
 					tickFormat={xTickLabels}
-					style={{ grid: { stroke: "none" } }}
+					style={{
+						axis: { stroke: theme.grid, strokeWidth: 1 },
+						grid: { stroke: "none" },
+					}}
+				/>
+				<VictoryAxis
+					orientation="top"
+					style={{
+						axis: { stroke: theme.grid, strokeWidth: 1 },
+						ticks: { size: 0 },
+						tickLabels: { fill: "none" },
+						grid: { stroke: "none" },
+					}}
 				/>
 				<VictoryAxis
 					dependentAxis
 					tickValues={[0, 25, 50, 75, 100]}
 					tickFormat={(t: number) => `${t}%`}
 					style={{
+						axis: { stroke: theme.grid, strokeWidth: 1 },
 						grid: { stroke: theme.grid, strokeDasharray: "3 3" },
-						axis: { stroke: "none" },
+					}}
+				/>
+				<VictoryAxis
+					dependentAxis
+					orientation="right"
+					style={{
+						axis: { stroke: theme.grid, strokeWidth: 1 },
+						ticks: { size: 0 },
+						tickLabels: { fill: "none" },
+						grid: { stroke: "none" },
 					}}
 				/>
 				<VictoryBar
@@ -172,7 +196,7 @@ export default function BatteryHistoryChart() {
 					/>
 				))}
 			</VictoryChart>
-			{cursor && (
+			{activePoint && (
 				<svg
 					className="absolute inset-0 w-full h-full pointer-events-none"
 					viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
@@ -180,17 +204,17 @@ export default function BatteryHistoryChart() {
 				>
 					<title>Battery History Cursor</title>
 					<line
-						x1={xToPixel(cursor.point.x)}
+						x1={xToPixel(activePoint.point.x)}
 						y1={PADDING.top}
-						x2={xToPixel(cursor.point.x)}
+						x2={xToPixel(activePoint.point.x)}
 						y2={CHART_HEIGHT - PADDING.bottom}
 						stroke={theme.secondary}
 						strokeWidth={1}
 						strokeDasharray="4 4"
 					/>
 					<circle
-						cx={xToPixel(cursor.point.x)}
-						cy={yToPixel(cursor.point.y)}
+						cx={xToPixel(activePoint.point.x)}
+						cy={yToPixel(activePoint.point.y)}
 						r={5}
 						fill={theme.secondary}
 						stroke="white"

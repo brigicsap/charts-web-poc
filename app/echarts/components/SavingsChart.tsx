@@ -9,7 +9,7 @@ import { round2, toGBP } from "./utils";
 
 const data = rawData.intervalSavings.map((d) => {
 	const date = new Date(d.start);
-	const label = `${date.getDate()}/${date.getMonth() + 1}`;
+	const label = `${date.getDate()} ${date.toLocaleDateString("en-GB", { month: "short" })}`;
 	return {
 		label,
 		notOptimised: Math.round(toGBP(d.notOptimisedStrategySavings) * 100) / 100,
@@ -25,24 +25,24 @@ export default function SavingsChart() {
 	const ref = useRef<HTMLDivElement>(null);
 	const chartRef = useRef<echarts.ECharts | null>(null);
 	const { theme } = useChartTheme();
-	const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+	const [activeIndex, setActiveIndex] = useState<number | null>(null);
 	const legendItems = [
 		{
 			label: "Not Optimised",
 			color: theme.primary,
 			valueText: `£${round2(
-				hoverIndex == null
+				activeIndex == null
 					? notOptimisedData.reduce((sum, v) => sum + v, 0)
-					: (notOptimisedData[hoverIndex] ?? 0),
+					: (notOptimisedData[activeIndex] ?? 0),
 			).toFixed(2)}`,
 		},
 		{
 			label: "Used Strategy",
 			color: theme.tertiary,
 			valueText: `£${round2(
-				hoverIndex == null
+				activeIndex == null
 					? usedData.reduce((sum, v) => sum + v, 0)
-					: (usedData[hoverIndex] ?? 0),
+					: (usedData[activeIndex] ?? 0),
 			).toFixed(2)}`,
 		},
 	];
@@ -52,10 +52,12 @@ export default function SavingsChart() {
 		chartRef.current = echarts.init(ref.current);
 		const handleResize = () => chartRef.current?.resize();
 		window.addEventListener("resize", handleResize);
-		chartRef.current.on("mouseover", (params) => {
-			if (typeof params.dataIndex === "number") setHoverIndex(params.dataIndex);
+		chartRef.current.on("click", (params) => {
+			if (typeof params.dataIndex === "number") {
+				const idx = params.dataIndex;
+				setActiveIndex((prev) => (prev === idx ? null : idx));
+			}
 		});
-		chartRef.current.on("globalout", () => setHoverIndex(null));
 		return () => {
 			window.removeEventListener("resize", handleResize);
 			chartRef.current?.dispose();
@@ -113,7 +115,7 @@ export default function SavingsChart() {
 
 	return (
 		<div className="w-full h-80 flex flex-col gap-2">
-			<LegendValues items={legendItems} isInteractive={hoverIndex != null} />
+			<LegendValues items={legendItems} isInteractive={activeIndex != null} />
 			<div ref={ref} className="w-full flex-1 min-h-0" />
 		</div>
 	);

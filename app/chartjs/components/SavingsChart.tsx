@@ -12,7 +12,7 @@ import "./chartSetup";
 const rows = rawData.intervalSavings.map((d) => {
 	// Convert API money fields (units + nanos) into chart-ready GBP values.
 	const date = new Date(d.start);
-	const label = `${date.getDate()}/${date.getMonth() + 1}`;
+	const label = `${date.getDate()} ${date.toLocaleDateString("en-GB", { month: "short" })}`;
 	return {
 		time: label,
 		notOptimised: Math.round(toGBP(d.notOptimisedStrategySavings) * 100) / 100,
@@ -22,7 +22,7 @@ const rows = rawData.intervalSavings.map((d) => {
 
 export default function SavingsChart() {
 	const { theme } = useChartTheme();
-	const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+	const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
 	const data: ChartData<"line"> = {
 		labels: rows.map((r) => r.time),
@@ -55,8 +55,10 @@ export default function SavingsChart() {
 		layout: {
 			padding: { top: 30, right: 0, bottom: 0, left: 0 },
 		},
-		onHover: (_, elements) => {
-			setHoverIndex(elements.length ? elements[0].index : null);
+		onClick: (_, elements) => {
+			if (!elements.length) return;
+			const idx = elements[0].index;
+			setActiveIndex((prev) => (prev === idx ? null : idx));
 		},
 		interaction: {
 			mode: "index",
@@ -77,13 +79,13 @@ export default function SavingsChart() {
 		},
 		scales: {
 			x: {
-				grid: { display: false },
+				grid: { drawOnChartArea: false },
 				border: {
 					display: true,
 					color: theme.grid,
 					width: 1,
 				},
-				ticks: { font: { size: 12 } },
+				ticks: { maxRotation: 0, font: { size: 12 } },
 			},
 			y: {
 				border: {
@@ -111,18 +113,18 @@ export default function SavingsChart() {
 		{
 			label: "Not Optimised",
 			color: theme.primary,
-			valueText: `£${round2(hoverIndex == null ? notOptimisedOverall : (notOptimisedValues[hoverIndex] ?? 0)).toFixed(2)}`,
+			valueText: `£${round2(activeIndex == null ? notOptimisedOverall : (notOptimisedValues[activeIndex] ?? 0)).toFixed(2)}`,
 		},
 		{
 			label: "Used Strategy",
 			color: theme.tertiary,
-			valueText: `£${round2(hoverIndex == null ? usedOverall : (usedValues[hoverIndex] ?? 0)).toFixed(2)}`,
+			valueText: `£${round2(activeIndex == null ? usedOverall : (usedValues[activeIndex] ?? 0)).toFixed(2)}`,
 		},
 	];
 
 	return (
 		<div className="w-full h-80 flex flex-col gap-2">
-			<LegendValues items={legendItems} isInteractive={hoverIndex != null} />
+			<LegendValues items={legendItems} isInteractive={activeIndex != null} />
 			<div className="flex-1 min-h-0">
 				<Line data={data} options={options} />
 			</div>

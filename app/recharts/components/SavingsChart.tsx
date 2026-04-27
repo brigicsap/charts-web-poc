@@ -15,9 +15,10 @@ import LegendValues from "../../chartjs/components/LegendValues";
 import rawData from "../../mockData/savingsMock.json";
 import { round2, toGBP } from "./utils";
 
+// The mock data has a different shape so we need to transform it into the format expected by the chart
 const data = rawData.intervalSavings.map((d) => {
 	const date = new Date(d.start);
-	const label = `${date.getDate()}/${date.getMonth() + 1}`;
+	const label = `${date.getDate()} ${date.toLocaleDateString("en-GB", { month: "short" })}`;
 	return {
 		time: label,
 		notOptimised: Math.round(toGBP(d.notOptimisedStrategySavings) * 100) / 100,
@@ -28,8 +29,11 @@ const data = rawData.intervalSavings.map((d) => {
 export default function SavingsChart() {
 	const { theme } = useChartTheme();
 	const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+	// Pre-calculate legend values for performance and cleaner code
 	const notOptimisedValues = data.map((d) => d.notOptimised);
+	// Calculate total values for when no specific point is active
 	const usedValues = data.map((d) => d.used);
+	// Legend items with dynamic values based on active index
 	const legendItems = [
 		{
 			label: "Not Optimised",
@@ -57,13 +61,12 @@ export default function SavingsChart() {
 				<AreaChart
 					data={data}
 					margin={{ top: 10, right: 20, left: 10, bottom: 0 }}
-					onMouseMove={(state) =>
+					onMouseMove={(state) => {
+						const idx = state?.activeTooltipIndex;
 						setHoverIndex(
-							state?.isTooltipActive
-								? (state.activeTooltipIndex ?? null)
-								: null,
-						)
-					}
+							state?.isTooltipActive && typeof idx === "number" ? idx : null,
+						);
+					}}
 					onMouseLeave={() => setHoverIndex(null)}
 				>
 					<CartesianGrid
@@ -87,9 +90,9 @@ export default function SavingsChart() {
 						fontSize={14}
 					/>
 					<Tooltip
-						formatter={(value: number, name: string) => [
-							`£${round2(Number(value)).toFixed(2)}`,
-							name,
+						formatter={(value, name) => [
+							`£${round2(Number(value ?? 0)).toFixed(2)}`,
+							String(name),
 						]}
 					/>
 					<Area

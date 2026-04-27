@@ -18,8 +18,7 @@ export default function ExportImportBarChart() {
 	const chartRef = useRef<echarts.ECharts | null>(null);
 	const { theme } = useChartTheme();
 	const [activeIndex, setActiveIndex] = useState<number | null>(null);
-	const [hoverIndex, setHoverIndex] = useState<number | null>(null);
-	const legendIndex = activeIndex ?? hoverIndex;
+	const legendIndex = activeIndex;
 	const importSeries = importData.map((v) => Number(v));
 	const exportSeries = exportData.map((v) => Number(v));
 	const legendItems = [
@@ -53,10 +52,6 @@ export default function ExportImportBarChart() {
 			const idx = params.dataIndex as number;
 			setActiveIndex((prev) => (prev === idx ? null : idx));
 		});
-		chart.on("mouseover", (params) => {
-			if (typeof params.dataIndex === "number") setHoverIndex(params.dataIndex);
-		});
-		chart.on("globalout", () => setHoverIndex(null));
 		return () => {
 			window.removeEventListener("resize", handleResize);
 			chart.dispose();

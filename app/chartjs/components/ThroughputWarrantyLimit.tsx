@@ -24,7 +24,7 @@ const rows = [
 export default function ThroughputWarrantyLimit() {
 	const { theme } = useChartTheme();
 	const labels = rows.map((d) => String(d.year));
-	const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+	const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
 	const referencePlugin = useMemo<Plugin<"line">>(
 		() => ({
@@ -114,8 +114,10 @@ export default function ThroughputWarrantyLimit() {
 		layout: {
 			padding: { top: 30, right: 0, bottom: 0, left: 0 },
 		},
-		onHover: (_, elements) => {
-			setHoverIndex(elements.length ? elements[0].index : null);
+		onClick: (_, elements) => {
+			if (!elements.length) return;
+			const idx = elements[0].index;
+			setActiveIndex((prev) => (prev === idx ? null : idx));
 		},
 		interaction: {
 			mode: "index",
@@ -135,6 +137,7 @@ export default function ThroughputWarrantyLimit() {
 		scales: {
 			x: {
 				ticks: {
+					maxRotation: 0,
 					callback: (_, index) => {
 						const v = Number(labels[index] ?? "0");
 						if (v === 1 || v === 2 || v === 10) return `Yr ${v}`;
@@ -146,7 +149,7 @@ export default function ThroughputWarrantyLimit() {
 					color: theme.grid,
 					width: 1,
 				},
-				grid: { display: false },
+				grid: { drawOnChartArea: false },
 			},
 			yLeft: {
 				type: "linear",
@@ -198,18 +201,18 @@ export default function ThroughputWarrantyLimit() {
 		{
 			label: "Throughput",
 			color: theme.primary,
-			valueText: `${round2(hoverIndex == null ? throughputOverall : (rows[hoverIndex]?.throughput ?? throughputOverall)).toFixed(2)} MWh`,
+			valueText: `${round2(activeIndex == null ? throughputOverall : (rows[activeIndex]?.throughput ?? throughputOverall)).toFixed(2)} MWh`,
 		},
 		{
 			label: "Warranty",
 			color: theme.warrantyStroke,
-			valueText: `${round2(hoverIndex == null ? warrantyOverall : (rows[hoverIndex]?.warranty ?? warrantyOverall)).toFixed(2)} MWh`,
+			valueText: `${round2(activeIndex == null ? warrantyOverall : (rows[activeIndex]?.warranty ?? warrantyOverall)).toFixed(2)} MWh`,
 		},
 	];
 
 	return (
 		<div className="w-full h-80 flex flex-col gap-2">
-			<LegendValues items={legendItems} isInteractive={hoverIndex != null} />
+			<LegendValues items={legendItems} isInteractive={activeIndex != null} />
 			<div className="flex-1 min-h-0">
 				<Line data={data} options={options} plugins={[referencePlugin]} />
 			</div>
