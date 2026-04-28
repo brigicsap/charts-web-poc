@@ -1,12 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
-import {
-	VictoryArea,
-	VictoryAxis,
-	VictoryChart,
-	VictoryVoronoiContainer,
-} from "victory";
+import { VictoryArea, VictoryAxis, VictoryChart } from "victory";
 import { useChartTheme } from "../../ChartThemeContext";
 import LegendValues from "../../chartjs/components/LegendValues";
 import rawData from "../../mockData/savingsMock.json";
@@ -30,65 +24,27 @@ const tickLabels = data.map((d) => d.label);
 
 export default function SavingsChart() {
 	const { theme } = useChartTheme();
-	const [activeIndex, setActiveIndex] = useState<number | null>(null);
-	const hoverRef = useRef<number | null>(null);
 	const notOptimisedOverall = round2(
 		data.reduce((sum, row) => sum + row.notOptimised, 0),
 	);
 	const usedOverall = round2(data.reduce((sum, row) => sum + row.used, 0));
-	const activeRow =
-		activeIndex == null ? null : data.find((d) => d.index === activeIndex);
 	const legendItems = [
 		{
 			label: "Not Optimised",
 			color: theme.primary,
-			valueText: `£${round2(activeRow?.notOptimised ?? notOptimisedOverall).toFixed(2)}`,
+			valueText: `£${notOptimisedOverall.toFixed(2)}`,
 		},
 		{
 			label: "Used Strategy",
 			color: theme.tertiary,
-			valueText: `£${round2(activeRow?.used ?? usedOverall).toFixed(2)}`,
+			valueText: `£${usedOverall.toFixed(2)}`,
 		},
 	];
 	return (
-		// biome-ignore lint/a11y/useSemanticElements: chart interaction wrapper
-		<div
-			className="w-full h-80 flex flex-col gap-2"
-			role="button"
-			tabIndex={0}
-			onClick={() => {
-				const idx = hoverRef.current;
-				if (idx != null) {
-					setActiveIndex((prev) => (prev === idx ? null : idx));
-				}
-			}}
-			onKeyDown={(e) => {
-				if (e.key === "Enter" || e.key === " ") {
-					const idx = hoverRef.current;
-					if (idx != null) {
-						setActiveIndex((prev) => (prev === idx ? null : idx));
-					}
-				}
-			}}
-		>
-			<LegendValues items={legendItems} isInteractive={activeRow != null} />
+		<div className="w-full h-80 flex flex-col gap-2">
+			<LegendValues items={legendItems} isInteractive={false} />
 			<div className="flex-1 min-h-0">
-				<VictoryChart
-					padding={{ top: 40, bottom: 40, left: 60, right: 20 }}
-					containerComponent={
-						<VictoryVoronoiContainer
-							labels={() => ""}
-							onActivated={(points) => {
-								if (!points.length) return;
-								const p = points[0] as { x?: number };
-								hoverRef.current = typeof p.x === "number" ? p.x : null;
-							}}
-							onDeactivated={() => {
-								hoverRef.current = null;
-							}}
-						/>
-					}
-				>
+				<VictoryChart padding={{ top: 40, bottom: 40, left: 60, right: 20 }}>
 					<VictoryAxis
 						tickValues={tickValues}
 						tickFormat={tickLabels}

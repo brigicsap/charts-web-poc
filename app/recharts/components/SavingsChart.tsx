@@ -1,12 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import {
 	Area,
 	AreaChart,
 	CartesianGrid,
 	ResponsiveContainer,
-	Tooltip,
 	XAxis,
 	YAxis,
 } from "recharts";
@@ -28,46 +26,34 @@ const data = rawData.intervalSavings.map((d) => {
 
 export default function SavingsChart() {
 	const { theme } = useChartTheme();
-	const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 	// Pre-calculate legend values for performance and cleaner code
 	const notOptimisedValues = data.map((d) => d.notOptimised);
 	// Calculate total values for when no specific point is active
 	const usedValues = data.map((d) => d.used);
+	const notOptimisedOverall = round2(
+		notOptimisedValues.reduce((sum, v) => sum + v, 0),
+	);
+	const usedOverall = round2(usedValues.reduce((sum, v) => sum + v, 0));
 	// Legend items with dynamic values based on active index
 	const legendItems = [
 		{
 			label: "Not Optimised",
 			color: theme.primary,
-			valueText: `£${round2(
-				hoverIndex == null
-					? notOptimisedValues.reduce((sum, v) => sum + v, 0)
-					: (notOptimisedValues[hoverIndex] ?? 0),
-			).toFixed(2)}`,
+			valueText: `£${notOptimisedOverall.toFixed(2)}`,
 		},
 		{
 			label: "Used Strategy",
 			color: theme.tertiary,
-			valueText: `£${round2(
-				hoverIndex == null
-					? usedValues.reduce((sum, v) => sum + v, 0)
-					: (usedValues[hoverIndex] ?? 0),
-			).toFixed(2)}`,
+			valueText: `£${usedOverall.toFixed(2)}`,
 		},
 	];
 	return (
 		<div className="w-full h-80 flex flex-col gap-2">
-			<LegendValues items={legendItems} isInteractive={hoverIndex != null} />
+			<LegendValues items={legendItems} isInteractive={false} />
 			<ResponsiveContainer width="100%" height="100%">
 				<AreaChart
 					data={data}
 					margin={{ top: 10, right: 20, left: 10, bottom: 0 }}
-					onMouseMove={(state) => {
-						const idx = state?.activeTooltipIndex;
-						setHoverIndex(
-							state?.isTooltipActive && typeof idx === "number" ? idx : null,
-						);
-					}}
-					onMouseLeave={() => setHoverIndex(null)}
 				>
 					<CartesianGrid
 						vertical={false}
@@ -88,12 +74,6 @@ export default function SavingsChart() {
 						tickSize={10}
 						tickMargin={6}
 						fontSize={14}
-					/>
-					<Tooltip
-						formatter={(value, name) => [
-							`£${round2(Number(value ?? 0)).toFixed(2)}`,
-							String(name),
-						]}
 					/>
 					<Area
 						type="monotone"

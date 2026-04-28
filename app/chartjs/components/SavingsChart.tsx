@@ -1,7 +1,6 @@
 "use client";
 
 import type { ChartData, ChartOptions } from "chart.js";
-import { useState } from "react";
 import { Line } from "react-chartjs-2";
 import { useChartTheme } from "../../ChartThemeContext";
 import rawData from "../../mockData/savingsMock.json";
@@ -22,7 +21,6 @@ const rows = rawData.intervalSavings.map((d) => {
 
 export default function SavingsChart() {
 	const { theme } = useChartTheme();
-	const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
 	const data: ChartData<"line"> = {
 		labels: rows.map((r) => r.time),
@@ -55,26 +53,13 @@ export default function SavingsChart() {
 		layout: {
 			padding: { top: 30, right: 0, bottom: 0, left: 0 },
 		},
-		onClick: (_, elements) => {
-			if (!elements.length) return;
-			const idx = elements[0].index;
-			setActiveIndex((prev) => (prev === idx ? null : idx));
-		},
-		interaction: {
-			mode: "index",
-			intersect: false,
-		},
+		events: [],
 		plugins: {
 			legend: {
 				display: false,
 			},
 			tooltip: {
-				mode: "index",
-				intersect: false,
-				callbacks: {
-					label: (ctx) =>
-						`${ctx.dataset.label}: £${round2(Number(ctx.parsed.y ?? 0)).toFixed(2)}`,
-				},
+				enabled: false,
 			},
 		},
 		scales: {
@@ -113,18 +98,18 @@ export default function SavingsChart() {
 		{
 			label: "Not Optimised",
 			color: theme.primary,
-			valueText: `£${round2(activeIndex == null ? notOptimisedOverall : (notOptimisedValues[activeIndex] ?? 0)).toFixed(2)}`,
+			valueText: `£${notOptimisedOverall.toFixed(2)}`,
 		},
 		{
 			label: "Used Strategy",
 			color: theme.tertiary,
-			valueText: `£${round2(activeIndex == null ? usedOverall : (usedValues[activeIndex] ?? 0)).toFixed(2)}`,
+			valueText: `£${usedOverall.toFixed(2)}`,
 		},
 	];
 
 	return (
 		<div className="w-full h-80 flex flex-col gap-2">
-			<LegendValues items={legendItems} isInteractive={activeIndex != null} />
+			<LegendValues items={legendItems} isInteractive={false} />
 			<div className="flex-1 min-h-0">
 				<Line data={data} options={options} />
 			</div>
