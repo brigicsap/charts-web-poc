@@ -1,15 +1,16 @@
 "use client";
 
-import Link from "next/link";
 import { ChartThemeProvider, useChartTheme } from "../ChartThemeContext";
 import { type ChartThemeName, chartThemes } from "../chartTheme";
-import NotesBox from "../NotesBox";
 import NavLinks from "../NavLinks";
+import NotesBox from "../NotesBox";
 import BatteryHistoryChart from "./components/BatteryHistoryChart";
+import CustomerAppRetention from "./components/CustomerAppRetention";
 import ExportImportBarChart from "./components/ExportImportBarChart";
 import HomeUsageChart from "./components/HomeUsageChart";
 import SavingsChart from "./components/SavingsChart";
 import ThroughputWarrantyLimit from "./components/ThroughputWarrantyLimit";
+import WeeklyActiveUsers from "./components/WeeklyActiveUsers";
 import { notes } from "./notes";
 
 function ThemeToggle() {
@@ -47,6 +48,14 @@ export default function EChartsPage() {
 						<ThemeToggle />
 					</div>
 					<NotesBox content={notes} />
+					<h2 className="text-xl font-medium text-black dark:text-zinc-200">
+						Customer App Retention
+					</h2>
+					<CustomerAppRetention />
+					<h2 className="text-xl font-medium text-black dark:text-zinc-200">
+						Weekly Active Users
+					</h2>
+					<WeeklyActiveUsers />
 					<h2 className="text-xl font-medium text-black dark:text-zinc-200">
 						Home Usage
 					</h2>
