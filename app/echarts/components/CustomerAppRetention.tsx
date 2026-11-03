@@ -136,7 +136,7 @@ export default function CustomerAppRetention() {
 						t.toValue,
 						t.label,
 					]),
-					renderItem: (_params: unknown, api: any) => {
+					renderItem: (_params: unknown, api: echarts.CustomSeriesRenderItemAPI) => {
 						const fromIndex = Number(api.value(0));
 						const fromValue = Number(api.value(1));
 						const toValue = Number(api.value(2));

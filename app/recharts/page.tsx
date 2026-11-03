@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { ChartThemeProvider, useChartTheme } from "../ChartThemeContext";
 import { type ChartThemeName, chartThemes } from "../chartTheme";
 import NotesBox from "../NotesBox";

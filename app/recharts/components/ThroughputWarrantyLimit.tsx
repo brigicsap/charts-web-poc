@@ -68,7 +68,7 @@ export default function ThroughputWarrantyLimit() {
 					onMouseMove={(state) =>
 						setHoverIndex(
 							state?.isTooltipActive
-								? (state.activeTooltipIndex ?? null)
+								? ((state.activeTooltipIndex as number) ?? null)
 								: null,
 						)
 					}
@@ -104,9 +104,9 @@ export default function ThroughputWarrantyLimit() {
 						tickFormatter={(v: number) => `${v}%`}
 					/>
 					<Tooltip
-						formatter={(value: number, name: string) => [
-							`${round2(Number(value)).toFixed(2)} MWh`,
-							name,
+						formatter={(value) => [
+							`${round2(Number(value ?? 0)).toFixed(2)} MWh`,
+							undefined,
 						]}
 					/>
 					<ReferenceLine
