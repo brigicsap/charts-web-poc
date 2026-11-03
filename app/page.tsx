@@ -9,6 +9,12 @@ export default function Home() {
 				</h1>
 				<div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
 					<Link
+						href="/echarts-prod"
+						className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
+					>
+						ECharts Prod
+					</Link>
+					<Link
 						href="/echarts"
 						className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
 					>
@@ -20,12 +26,12 @@ export default function Home() {
 					>
 						Recharts
 					</Link>
-					<Link
+					{/* <Link
 						href="/victory"
 						className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
 					>
 						Victory
-					</Link>
+					</Link> */}
 					<Link
 						href="/chartjs"
 						className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"

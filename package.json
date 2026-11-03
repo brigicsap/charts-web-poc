@@ -9,9 +9,13 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@js-joda/core": "^6.3.2",
+    "@js-joda/timezone": "^3.2.1",
     "@tailwindcss/typography": "^0.5.19",
+    "@tanstack/react-query": "^5.105.1",
     "chart.js": "^4.5.1",
     "echarts": "^6.0.0",
+    "lucide-react": "^1.66.0",
     "next": "16.2.4",
     "react": "19.2.4",
     "react-chartjs-2": "^5.3.1",
@@ -19,7 +23,8 @@
     "react-markdown": "^10.1.0",
     "recharts": "^3.8.1",
     "victory": "^37.3.6",
-    "victory-native": "^41.20.2"
+    "victory-native": "^41.20.2",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
