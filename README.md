@@ -1,30 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Charts Web POC
 
-## Getting Started
+Production-ready charting proof-of-concept with ECharts. Demonstrates clean architecture patterns with separate fetch, transform, config, and render layers.
 
-First, run the development server:
+## Project Structure
+
+```
+app/
+├── echarts-prod/          ⭐ Main implementation
+│   ├── components/        # Chart components & options
+│   ├── data/              # Mappers, queries, mock data
+│   ├── hooks/             # React Query data hooks
+│   ├── utils/             # Reusable utility functions
+│   ├── api/               # API routes
+│   └── page.tsx           # Entry point
+├── echarts/               # Original reference
+├── recharts/              # Alternative library
+├── victory/               # Alternative library
+└── chartjs/               # Alternative library
+
+docs/                      # Comprehensive data flow documentation
+├── README.md              # Quick navigation
+├── DATA_FLOW_SUMMARY.md   # Visual overview
+├── DATA_FLOW_WALKTHROUGH.md # Step-by-step examples
+├── PATTERN_ALIGNMENT.md   # vs apps-platform
+└── FILE_REFERENCE_GUIDE.md # Code navigation
+```
+
+## Quick Start
 
 ```bash
+pnpm install
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) → Click "ECharts (Prod)"
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Architecture
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+API → Fetch (React Query) → Transform (Utils) → Config → Render → Chart
+```
+
+- **Fetch**: `hooks/` (useBatteryData, useEnergyData, etc.)
+- **Transform**: `utils/` + `data/mappers.ts` (format, calculate, convert)
+- **Config**: `components/chartOptions.ts` (build ECharts options)
+- **Render**: `components/Chart.tsx` (ZRenderer interactions)
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+Start with **`docs/README.md`** for complete data flow documentation with real examples from apps-platform.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Status
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+✅ Production-ready | ✅ Zero lint errors | ✅ Fully documented | ✅ Type-safe
