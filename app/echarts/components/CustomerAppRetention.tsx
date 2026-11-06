@@ -76,6 +76,7 @@ export default function CustomerAppRetention() {
 				top: 10,
 				left: "center",
 				orient: "horizontal",
+				// Stage names identify bars; they cannot be toggled off.
 				selectedMode: false,
 				textStyle: { color: "#111827" },
 				itemWidth: 14,
@@ -97,10 +98,12 @@ export default function CustomerAppRetention() {
 			},
 			yAxis: {
 				type: "value",
+				// Leave headroom above the tallest bar for its value label.
 				max: (value: { max: number }) => Math.ceil(value.max * 1.2),
 				splitLine: { lineStyle: { type: "dashed" } },
 			},
 			series: [
+				// Each stage has a value only in its matching category.
 				...funnelData.map((item, index) => {
 					const color =
 						FUNNEL_COLORS[index] ?? FUNNEL_COLORS[FUNNEL_COLORS.length - 1];
@@ -125,6 +128,7 @@ export default function CustomerAppRetention() {
 						data: funnelData.map((_, i) => (i === index ? item.value : null)),
 					};
 				}),
+				// Custom overlay draws percentage-change arrows between stages.
 				{
 					name: "Transition",
 					type: "custom",

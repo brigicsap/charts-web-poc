@@ -94,6 +94,7 @@ export default function ExportImportBarChart() {
 				name: "£",
 				splitLine: { lineStyle: { type: "dashed" } },
 			},
+			// Share a stack so import and export values align at each time slot.
 			series: [
 				{
 					name: "Import",

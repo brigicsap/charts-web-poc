@@ -69,9 +69,13 @@ export default function BatteryHistoryChart() {
 		chartRef.current?.setOption({
 			tooltip: {
 				trigger: "axis",
+				// Show a dashed vertical guide at the hovered time.
 				axisPointer: {
 					type: "line",
-					lineStyle: { color: theme.secondary, type: "dashed" },
+					lineStyle: {
+						color: theme.secondary,
+						type: "dashed",
+					},
 				},
 				formatter: (params: unknown) => {
 					const item = (
@@ -80,10 +84,17 @@ export default function BatteryHistoryChart() {
 					return `${item.seriesName}: ${round2(Number(item.value ?? 0)).toFixed(2)}%`;
 				},
 			},
-			grid: { top: 40, bottom: 30, left: 50, right: 20 },
+			// Reserve space around the plot for axis labels.
+			grid: {
+				top: 40,
+				bottom: 30,
+				left: 50,
+				right: 20,
+			},
 			xAxis: {
 				type: "category",
 				data: allSlots,
+				// Mark every three hours; show labels every six hours.
 				axisTick: {
 					show: true,
 					alignWithLabel: true,
@@ -101,7 +112,11 @@ export default function BatteryHistoryChart() {
 				min: 0,
 				max: 100,
 				interval: 25,
-				splitLine: { lineStyle: { type: "dashed" } },
+				splitLine: {
+					lineStyle: {
+						type: "dashed",
+					},
+				},
 			},
 			series: [
 				{
@@ -109,6 +124,7 @@ export default function BatteryHistoryChart() {
 					type: "line",
 					data: batteryData,
 					smooth: true,
+					// Keep missing readings as visible gaps in the line.
 					connectNulls: false,
 					symbol: "circle",
 					showSymbol: false,
@@ -120,8 +136,14 @@ export default function BatteryHistoryChart() {
 							borderWidth: 4,
 						},
 					},
-					lineStyle: { color: theme.primary, width: 2 },
-					itemStyle: { color: theme.secondary },
+					lineStyle: {
+						color: theme.primary,
+						width: 2,
+					},
+					itemStyle: {
+						color: theme.secondary,
+					},
+					// Shade the reference gap from 05:00 to 07:00.
 					markArea: {
 						silent: true,
 						data: [

@@ -171,6 +171,7 @@ export default function HomeUsageChart() {
 					right: 20,
 					borderColor: "transparent",
 				},
+				// Draw reference borders along the plot's left and top edges.
 				graphic: [
 					{
 						type: "line",
@@ -191,6 +192,7 @@ export default function HomeUsageChart() {
 					name: "kWh",
 					splitLine: { lineStyle: { type: "dashed" } },
 				},
+				// Invisible gap series position the stacked usage sources.
 				series: [
 					{
 						name: "Solar",

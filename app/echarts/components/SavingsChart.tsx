@@ -55,6 +55,7 @@ export default function SavingsChart() {
 
 	useEffect(() => {
 		chartRef.current?.setOption({
+			// Values are shown in the companion legend instead of a tooltip.
 			tooltip: {
 				show: false,
 			},

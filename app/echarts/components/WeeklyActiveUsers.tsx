@@ -110,6 +110,7 @@ export default function WeeklyActiveUsers() {
 				nameLocation: "middle",
 				nameGap: 25,
 			},
+			// Use separate scales for user counts and user percentage.
 			yAxis: [
 				{
 					type: "value",
@@ -151,6 +152,7 @@ export default function WeeklyActiveUsers() {
 					symbol: "none",
 					lineStyle: { width: 2, color: theme.tertiary },
 					itemStyle: { color: theme.tertiary },
+					// Bind the percentage series to the right-side scale.
 					yAxisIndex: 1,
 				},
 			],

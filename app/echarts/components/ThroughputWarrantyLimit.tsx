@@ -97,6 +97,7 @@ export default function ThroughputWarrantyLimit() {
 					},
 				},
 			},
+			// Configure MWh on the left and a percentage scale on the right.
 			yAxis: [
 				{
 					type: "value",
@@ -138,6 +139,7 @@ export default function ThroughputWarrantyLimit() {
 					lineStyle: { color: theme.primary, width: 3 },
 					itemStyle: { color: theme.primary },
 					areaStyle: { color: theme.areaFill, opacity: 0.15 },
+					// Mark the limit-hit year, current year, and horizontal thresholds.
 					markLine: {
 						silent: true,
 						symbol: "none",
