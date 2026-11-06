@@ -8,9 +8,9 @@ import NotesBox from "../NotesBox";
 import BatteryHistoryChart from "./components/BatteryHistoryChart";
 import CustomerAppRetention from "./components/CustomerAppRetention";
 import EnergyChart from "./components/EnergyChart";
-import SavingsChart from "./components/SavingsChart";
 import ThroughputWarrantyLimit from "./components/ThroughputWarrantyLimit";
 import WeeklyActiveUsers from "./components/WeeklyActiveUsers";
+import { TradingPerformanceChart } from "./components/TradingPerformanceChart";
 import { type Scenario, scenarioSchema } from "./data/contracts";
 import { DataProvider } from "./data/queries";
 import { notes } from "./notes";
@@ -96,9 +96,9 @@ export default function EChartsPage() {
             </h2>
             <ThroughputWarrantyLimit />
             <h2 className="text-xl font-medium text-black dark:text-zinc-200">
-              Savings
+              Trading Performance
             </h2>
-            <SavingsChart />
+            <TradingPerformanceChart date="2026-04-22" />
           </main>
         </div>
       </DataProvider>
