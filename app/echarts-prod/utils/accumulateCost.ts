@@ -1,3 +1,4 @@
+// Add an API money value to a running total while preserving nanounit precision.
 export function accumulateCost(
   current: number,
   value: { units: number; nanos: number },

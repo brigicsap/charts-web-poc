@@ -1,3 +1,4 @@
+// Round a number to two decimal places.
 export function round2(v: number): number {
   return Math.round(v * 100) / 100;
 }

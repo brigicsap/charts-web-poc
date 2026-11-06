@@ -1,3 +1,4 @@
+// Create the 96 quarter-hour time labels for a full day.
 export function buildQuarterHourSlots(): string[] {
   return Array.from({ length: 96 }, (_, i) => {
     const h = String(Math.floor(i / 4)).padStart(2, "0");

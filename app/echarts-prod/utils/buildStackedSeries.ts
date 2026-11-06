@@ -6,6 +6,7 @@ export type ChartSeries = {
   data: (number | null)[];
 };
 
+// Build stacked bars with spacing and selection styling for chart interactions.
 export function buildStackedSeries(
   series: ChartSeries[],
   selectedIndex: number | null,

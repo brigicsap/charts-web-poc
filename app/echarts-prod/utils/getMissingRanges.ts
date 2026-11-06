@@ -1,3 +1,4 @@
+// Find inclusive index ranges of consecutive null values.
 export function getMissingRanges(
   values: (number | null)[],
 ): [number, number][] {

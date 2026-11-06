@@ -8,6 +8,7 @@ export type EnergyDatapoint = {
   constituentDatapoints: EnergyConstituent[];
 };
 
+// Flatten datapoint constituents into chart rows keyed by time and series type.
 export function parseConstituentSeries(datapoints: EnergyDatapoint[]) {
   return datapoints.map((dp) => {
     const time = dp.from.slice(11, 16);

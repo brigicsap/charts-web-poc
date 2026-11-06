@@ -1,5 +1,6 @@
 import { Instant } from "@js-joda/core";
 
+// Format a timestamp as a day-time or weekday label, optionally in a timezone.
 export function formatTimestamp(
   value: string,
   resolution: "day" | "week",

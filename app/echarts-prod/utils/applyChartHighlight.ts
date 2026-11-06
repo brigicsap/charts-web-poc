@@ -1,5 +1,6 @@
 import type { EChartsType } from "echarts";
 
+// Sync the chart tooltip and highlighted point with the active interaction index.
 export function applyChartHighlight(
   chart: EChartsType,
   index: number | null,

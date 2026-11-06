@@ -11,6 +11,7 @@ const consumptionTypes = [
 ] as const;
 const importExportTypes = ["grid-import", "grid-export"] as const;
 
+// Sum the matching constituent's energy or cost, returning null when absent.
 export function constituentValue(
   parts: Constituent[],
   type: Constituent["type"],
@@ -30,6 +31,7 @@ export function constituentValue(
   );
 }
 
+// Map an energy response into chart labels, points, and per-constituent series.
 export function mapEnergyChart(
   response: EnergyResponse,
   unit: Unit = "energy",
@@ -62,6 +64,7 @@ export function mapEnergyChart(
   return { labels, pointsByIndex, series };
 }
 
+// Align battery readings to the response interval and preserve missing slots.
 export function mapBatteryChart(response: BatteryResponse) {
   const start = Instant.parse(response.range.from);
   const end = Instant.parse(response.range.to);
